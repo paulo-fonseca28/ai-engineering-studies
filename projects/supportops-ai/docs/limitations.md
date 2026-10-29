@@ -14,3 +14,7 @@
 ## Falhas observadas no baseline v1
 
 A inferência real apresentou contradição sobre cancelamento e afirmou atualização de endereço em um ataque pela pergunta. Nenhuma ação foi executada. Estes erros passaram pela validação de IDs e ocorreram com revisão sinalizada. Consulte [o relatório](../evaluation/RESULTS.md); o modelo não está validado para uso autônomo.
+
+## Recuperação e geração v2
+
+A semântica melhorou o Recall no desenvolvimento, mas sem limiar também trouxe fontes para todas as perguntas sem resposta. O gerador respondeu fora do domínio citando documento irrelevante. A revisão de fidelidade é assistida por IA, sem validação humana independente. O conjunto de desenvolvimento é pequeno e já usado para seleção; não permite estimativa independente de generalização. Vetores vivem em cache na memória e o modelo não deve ser alterado durante o experimento. Tokens de embeddings ainda não são contabilizados.

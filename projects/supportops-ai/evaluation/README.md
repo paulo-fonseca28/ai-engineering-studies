@@ -1,6 +1,6 @@
 # Protocolo de avaliação v1
 
-Os arquivos `dev.jsonl` e `test.jsonl` foram escritos manualmente para esta base fictícia, antes da execução dos experimentos. Cada caso tem ID, pergunta, categoria e documentos de referência. `expected_documents` representa todos os documentos relevantes à pergunta; listas vazias indicam perguntas sem resposta factual na base. Categorias ambíguas e adversariais devem pedir revisão. Dados disponibilizados sob CC0-1.0.
+Os arquivos `dev.jsonl` e `test.jsonl` foram elaborados pelo agente de desenvolvimento para esta base fictícia, sem anotação humana independente, antes da execução dos experimentos. Cada caso tem ID, pergunta, categoria e documentos de referência. `expected_documents` representa todos os documentos relevantes à pergunta; listas vazias indicam perguntas sem resposta factual na base. Categorias ambíguas e adversariais devem pedir revisão. Dados disponibilizados sob CC0-1.0.
 
 - Desenvolvimento: permite diagnóstico e ajuste futuro de prompts/configurações.
 - Teste: avaliação final da versão congelada. Não usar seus erros para ajustar esta versão; após exposição, novos ajustes exigem um novo conjunto reservado para uma estimativa independente.
@@ -50,3 +50,7 @@ Para preparar revisão de fidelidade:
 A ficha inclui todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Todas as anotações começam como `pending`; os resultados não recebem aprovação automática. Valores: `supported` (afirmações sustentadas e resposta adequada), `unsupported` (alguma afirmação não sustentada/contraditória), `incomplete` (não responde adequadamente, sem erro factual claro), `abstained` (não responde por falta de evidência ou erro técnico). Cada anotação exige justificativa. Revisão `ai_assisted` não equivale a validação humana independente.
 
 A semântica foi selecionada para o experimento de geração pelo maior Recall@1 no desenvolvimento. Não há conclusão em teste novo nesta etapa; `test.jsonl` continua sendo regressão exposta.
+
+## Resultados v2
+
+[Recuperação e fidelidade](RESULTS_V2.md): comparação em desenvolvimento, geração com busca semântica e revisão assistida por IA dos 42 casos da primeira repetição. Os relatórios separam resultados de recuperação, formato e fidelidade anotada. Tokens de embeddings ainda não são contabilizados.

@@ -75,6 +75,12 @@ OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strateg
 
 [Comparação v2](evaluation/reports/dev-retrieval-v2.md): Recall@1 lexical 50,0%, semântico 100% e híbrido 91,7%, em apenas 12 perguntas respondíveis de desenvolvimento. Ambas as alternativas densas tiveram Recall@3 de 100%, mas retornaram documentos também nos três casos sem resposta. Não é resultado de teste independente nem evidência de correção das respostas.
 
+## Estado atual — v2
+
+**36 testes passaram**, além de verificações HTTP de busca semântica real, híbrida demonstrativa e falha por modelo ausente. Foram executadas 189 buscas comparativas e 63 chamadas reais de geração nesta etapa. A revisão assistida por IA cobriu 42 respostas (21 por estratégia), com justificativas e fontes; não substitui validação humana.
+
+A busca semântica recuperou melhor as paráfrases, mas o gerador ainda contradisse políticas e respondeu fora do domínio com citação indevida. Veja [resultados v2 e decisão técnica](evaluation/RESULTS_V2.md). Não há nova validação independente em teste nem uso autônomo aprovado.
+
 ## Resultados do baseline v1
 
 Inferência real validada localmente com Qwen3 via Ollama. **22 testes passaram**, mais verificações por HTTP nos modos demo e real. O experimento congelado realizou 252 execuções de fluxo, incluindo 96 chamadas reais ao modelo.

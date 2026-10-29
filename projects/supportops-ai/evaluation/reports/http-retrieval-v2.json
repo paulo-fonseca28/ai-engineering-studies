@@ -1,0 +1,186 @@
+{
+  "created_at": "2026-10-29T17:29:10.235256+00:00",
+  "checks": [
+    {
+      "strategy": "semantic",
+      "mode": "ollama",
+      "embedding_model": "qwen3-embedding:0.6b",
+      "expected_status": "completed",
+      "response": {
+        "answer": "Se você quer pedir seu dinheiro de volta, é necessário registrar o identificador do pedido e encaminhar o caso para revisão do suporte. Não há garantia de prazo ou valor de reembolso, e não é possível confirmar reembolso ou reenvio automaticamente. Consulte o documento de reembolso para mais informações.",
+        "citations": [
+          "refund:99c8fd913355:1:0"
+        ],
+        "needs_review": true,
+        "sources": [
+          {
+            "id": "refund:99c8fd913355:1:0",
+            "document": "refund.md",
+            "version": "99c8fd913355cc62577ab51322a0655e667e2a4fc2d4cfb61bb996e7d5f9fa94",
+            "title": "Reembolso",
+            "text": "Solicitações de reembolso precisam de revisão da equipe de suporte. O prazo e o valor dependem da análise do caso. Não prometa valores nem prazos de devolução.",
+            "score": 0.5490866295529717
+          },
+          {
+            "id": "missing_items:ef4b24a1a2dd:1:0",
+            "document": "missing_items.md",
+            "version": "ef4b24a1a2dd454913349e6c148f0ac4b759e2fd21f950674b1ffbea9a437371",
+            "title": "Itens faltando ou incorretos",
+            "text": "Se houver item faltando ou incorreto, registre quais itens foram afetados e peça o identificador do pedido. Encaminhe o caso para revisão do suporte. Não confirme reenvio nem reembolso automaticamente.",
+            "score": 0.47651452606747446
+          },
+          {
+            "id": "payment:a72b5919ebbd:1:0",
+            "document": "payment.md",
+            "version": "a72b5919ebbd7d16430081fe0ed17797bcd4ad6abfc1a583f3e7b9cad38eed42",
+            "title": "Cobrança duplicada",
+            "text": "Para cobrança duplicada, solicite o identificador do pedido e registre a ocorrência para revisão financeira. Não peça número completo do cartão, senha nem código de segurança. Não confirme estorno automaticamente.",
+            "score": 0.42787127021064497
+          }
+        ],
+        "mode": "ollama",
+        "simulated": false,
+        "inference_status": "completed",
+        "usage": {
+          "model": "qwen3:1.7b",
+          "input_tokens": 831,
+          "output_tokens": 110,
+          "provider_duration_ns": 826563994,
+          "load_duration_ns": 795834
+        },
+        "trace_id": "45607e1a-8d7e-4f34-bfaa-6ad63068b4b0",
+        "trace": [
+          {
+            "step": "retrieval",
+            "strategy": "semantic",
+            "embedding": {
+              "model": "qwen3-embedding:0.6b",
+              "digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+              "details": {
+                "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "595.78M",
+                "quantization_level": "Q8_0",
+                "context_length": 32768,
+                "embedding_length": 1024,
+                "runner": "ggml"
+              }
+            },
+            "rrf_k": null,
+            "chunks_indexed": 6,
+            "sources_found": 3
+          },
+          {
+            "step": "inference",
+            "status": "completed"
+          }
+        ],
+        "duration_ms": 1241.043
+      }
+    },
+    {
+      "strategy": "hybrid",
+      "mode": "demo",
+      "embedding_model": "qwen3-embedding:0.6b",
+      "expected_status": "demo",
+      "response": {
+        "answer": "Demonstração: trechos recuperados, sem inferência de LLM.\nSolicitações de reembolso precisam de revisão da equipe de suporte. O prazo e o valor dependem da análise do caso. Não prometa valores nem prazos de devolução.\nSe houver item faltando ou incorreto, registre quais itens foram afetados e peça o identificador do pedido. Encaminhe o caso para revisão do suporte. Não confirme reenvio nem reembolso automaticamente.\nPara cobrança duplicada, solicite o identificador do pedido e registre a ocorrência para revisão financeira. Não peça número completo do cartão, senha nem código de segurança. Não confirme estorno automaticamente.",
+        "citations": [
+          "refund:99c8fd913355:1:0",
+          "missing_items:ef4b24a1a2dd:1:0",
+          "payment:a72b5919ebbd:1:0"
+        ],
+        "needs_review": true,
+        "sources": [
+          {
+            "id": "refund:99c8fd913355:1:0",
+            "document": "refund.md",
+            "version": "99c8fd913355cc62577ab51322a0655e667e2a4fc2d4cfb61bb996e7d5f9fa94",
+            "title": "Reembolso",
+            "text": "Solicitações de reembolso precisam de revisão da equipe de suporte. O prazo e o valor dependem da análise do caso. Não prometa valores nem prazos de devolução.",
+            "score": 0.01639344262295082
+          },
+          {
+            "id": "missing_items:ef4b24a1a2dd:1:0",
+            "document": "missing_items.md",
+            "version": "ef4b24a1a2dd454913349e6c148f0ac4b759e2fd21f950674b1ffbea9a437371",
+            "title": "Itens faltando ou incorretos",
+            "text": "Se houver item faltando ou incorreto, registre quais itens foram afetados e peça o identificador do pedido. Encaminhe o caso para revisão do suporte. Não confirme reenvio nem reembolso automaticamente.",
+            "score": 0.016129032258064516
+          },
+          {
+            "id": "payment:a72b5919ebbd:1:0",
+            "document": "payment.md",
+            "version": "a72b5919ebbd7d16430081fe0ed17797bcd4ad6abfc1a583f3e7b9cad38eed42",
+            "title": "Cobrança duplicada",
+            "text": "Para cobrança duplicada, solicite o identificador do pedido e registre a ocorrência para revisão financeira. Não peça número completo do cartão, senha nem código de segurança. Não confirme estorno automaticamente.",
+            "score": 0.015873015873015872
+          }
+        ],
+        "mode": "demo",
+        "simulated": true,
+        "inference_status": "demo",
+        "usage": null,
+        "trace_id": "161d5aae-2b0e-41d4-9855-a4c624531bdc",
+        "trace": [
+          {
+            "step": "retrieval",
+            "strategy": "hybrid",
+            "embedding": {
+              "model": "qwen3-embedding:0.6b",
+              "digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+              "details": {
+                "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "595.78M",
+                "quantization_level": "Q8_0",
+                "context_length": 32768,
+                "embedding_length": 1024,
+                "runner": "ggml"
+              }
+            },
+            "rrf_k": 60,
+            "chunks_indexed": 6,
+            "sources_found": 3
+          }
+        ],
+        "duration_ms": 122.386
+      }
+    },
+    {
+      "strategy": "semantic",
+      "mode": "ollama",
+      "embedding_model": "supportops-missing-model:test",
+      "expected_status": "skipped_retrieval_error",
+      "response": {
+        "answer": "Não foi possível consultar as fontes. É necessária revisão humana.",
+        "citations": [],
+        "needs_review": true,
+        "sources": [],
+        "mode": "ollama",
+        "simulated": false,
+        "inference_status": "skipped_retrieval_error",
+        "usage": null,
+        "trace_id": "ab34424c-8566-4e03-9d44-776dc79b1f8b",
+        "trace": [
+          {
+            "step": "retrieval",
+            "strategy": "semantic",
+            "error": "embedding_model_missing",
+            "chunks_indexed": 6,
+            "sources_found": 0
+          }
+        ],
+        "duration_ms": 18.388
+      }
+    }
+  ]
+}

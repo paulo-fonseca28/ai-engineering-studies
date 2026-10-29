@@ -1,19 +1,15 @@
 # AI Engineering Studies
 
-Estudos pessoais de engenharia de IA com implementações reproduzíveis e resultados verificáveis.
+Estudos pessoais de engenharia de IA com implementações reproduzíveis e resultados verificáveis. Código, testes, documentação e evidências evoluem juntos por entrega.
 
-## Projetos
+## SupportOps AI
 
-[SupportOps AI](projects/supportops-ai) prepara respostas para uma operação fictícia de delivery. Implementa API, recuperação lexical, fontes, rastreamento, demonstração sem credenciais e adaptador de inferência local. A avaliação tem conjuntos separados e relatórios auditáveis.
+Assistente experimental para uma operação fictícia de delivery: API FastAPI, políticas versionadas, busca lexical/semântica/híbrida, geração local com fontes e rastreamento. Modo demonstrativo disponível sem credenciais. Não executa ações externas nem consulta dados reais.
 
-O desenvolvimento mantém código, testes e documentação juntos por entrega. Estado atual, comandos e limitações estão no README de cada projeto. Não há alegações de uso em produção ou impacto de negócio.
+**Estado verificado:** 36 testes automatizados passaram, inferência local executada e novas estratégias verificadas por HTTP. No desenvolvimento, Recall@1 foi de 50% para lexical, 100% para semântica e 91,7% para híbrida, em apenas 12 perguntas respondíveis. A geração ainda apresenta contradições e citações indevidas; respostas exigem revisão.
 
-## Estado verificado
+- [Execução e arquitetura](projects/supportops-ai/README.md)
+- [Resultados v2: recuperação e fidelidade](projects/supportops-ai/evaluation/RESULTS_V2.md)
+- [Baseline v1 e suas falhas](projects/supportops-ai/evaluation/RESULTS.md)
 
-SupportOps AI: inferência local executada, 22 testes automatizados passando e avaliação reproduzível publicada. O baseline lexical alcançou Recall@3 de 66,7% nas 12 perguntas respondíveis do teste. A geração ainda contém erros semânticos e falhas adversariais; não está pronta para uso autônomo. Veja [evidências e limitações](projects/supportops-ai/evaluation/RESULTS.md).
-
-Próximo incremento: comparar recuperação semântica/híbrida e medir fidelidade das respostas, usando desenvolvimento para ajustes e um novo teste reservado para validação independente.
-
-## Incremento em andamento
-
-Busca semântica e híbrida implementadas e comparadas no desenvolvimento. A semântica recuperou a política correta em primeiro lugar nas 12 perguntas respondíveis, mas também retornou documentos nos casos sem resposta. Veja [comparação](projects/supportops-ai/evaluation/reports/dev-retrieval-v2.md) e o README do projeto para execução.
+A revisão de fidelidade é assistida por IA, sem validação humana independente. Não há alegações de uso em produção ou impacto de negócio. Próximo incremento: rejeição de evidências insuficientes e melhoria da geração, seguida de nova avaliação reservada.
