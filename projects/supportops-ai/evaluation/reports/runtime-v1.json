@@ -1,0 +1,30 @@
+{
+  "version": {
+    "version": "0.40.13"
+  },
+  "ps": {
+    "models": [
+      {
+        "name": "qwen3:1.7b",
+        "model": "qwen3:1.7b",
+        "size": 1706788125,
+        "digest": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "2.0B",
+          "quantization_level": "Q4_K_M"
+        },
+        "expires_at": "2026-10-29T14:05:17.015341084-03:00",
+        "size_vram": 1706788125,
+        "context_length": 4096,
+        "runner": "llamacpp"
+      }
+    ]
+  },
+  "gpu": "name, driver_version, memory.total [MiB], memory.used [MiB], utilization.gpu [%]\nNVIDIA GeForce RTX 3060, 610.88, 12288 MiB, 2677 MiB, 76 %"
+}

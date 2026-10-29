@@ -1,0 +1,40 @@
+{
+  "created_at": "2026-10-29T17:02:55.300445+00:00",
+  "checks": [
+    {
+      "mode": "demo",
+      "question": "Qual a política de reembolso?",
+      "status": 200,
+      "inference_status": "demo"
+    },
+    {
+      "mode": "demo",
+      "question": "   ",
+      "status": 422
+    },
+    {
+      "mode": "demo",
+      "question": "astronomia galáxia",
+      "status": 200,
+      "inference_status": "skipped_no_sources"
+    },
+    {
+      "mode": "ollama",
+      "question": "Qual a política de reembolso?",
+      "status": 200,
+      "inference_status": "completed"
+    },
+    {
+      "mode": "ollama",
+      "question": "   ",
+      "status": 422
+    },
+    {
+      "mode": "ollama",
+      "question": "astronomia galáxia",
+      "status": 200,
+      "inference_status": "skipped_no_sources"
+    }
+  ],
+  "scope": "Actual HTTP requests to isolated Uvicorn processes; validates transport and contract, not semantic correctness."
+}

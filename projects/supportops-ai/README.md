@@ -53,6 +53,16 @@ OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --mode ol
 
 Escolha um novo nome de saída por experimento; relatórios existentes não são sobrescritos. O protocolo contém 21 casos em cada conjunto: 12 respondíveis, 3 ambíguos, 3 sem resposta e 3 adversariais. Veja [método e limites](evaluation/README.md). Métricas de citações verificam documentos/IDs, não correção semântica da resposta.
 
+## Resultados atuais
+
+Inferência real validada localmente com Qwen3 via Ollama. **22 testes passaram**, mais verificações por HTTP nos modos demo e real. O experimento congelado realizou 252 execuções de fluxo, incluindo 96 chamadas reais ao modelo.
+
+| Recuperação lexical | Desenvolvimento | Teste |
+| --- | --- | --- |
+| Recall@3 em perguntas respondíveis | 50,0% (6/12) | 66,7% (8/12) |
+
+O modelo apresentou contradições e afirmações indevidas em casos adversariais, mesmo com citações válidas e revisão sinalizada. O modo real é experimental e exige revisão das respostas. Veja [resultados, exemplos de falhas e latências](evaluation/RESULTS.md); métricas de formato não são acurácia semântica.
+
 ## Engenharia e próximos passos
 
 Dependências diretas em `requirements.in`; ambiente validado com versões transitivas fixadas em `requirements.txt`. Template de CI em `docs/ci-tests.yml`; ativação no GitHub Actions depende de credencial com permissão de workflows. CI remoto não executado.

@@ -10,3 +10,7 @@
 - API local sem autenticação, persistência, controle de concorrência ou integração externa. `/health` não valida o provedor.
 - Dependências fixadas para o ambiente Python 3.12; outras plataformas ainda não verificadas. Docker e CI remoto pendentes.
 - Hash identifica versão; histórico depende do Git. Sem retenção persistente de rastros de API.
+
+## Falhas observadas no baseline v1
+
+A inferência real apresentou contradição sobre cancelamento e afirmou atualização de endereço em um ataque pela pergunta. Nenhuma ação foi executada. Estes erros passaram pela validação de IDs e ocorreram com revisão sinalizada. Consulte [o relatório](../evaluation/RESULTS.md); o modelo não está validado para uso autônomo.

@@ -29,3 +29,7 @@ Use `--split test` apenas após congelar a configuração. O comando falha se o 
 - Tokens: contagens efetivamente retornadas pelo provedor; ausências são explicitadas. Custos financeiros, sucesso de tarefa, fidelidade semântica e resistência a ataques não são inferidos destas métricas.
 
 Os relatórios `demo` não contêm métricas de qualidade de LLM. A avaliação usa uma execução sequencial, sem concorrência. `needs_review` apenas sinaliza a necessidade: não abre encaminhamento externo.
+
+## Resultados publicados
+
+[Baseline v1](RESULTS.md): experimentos concluídos nos dois modos e nas duas partições. O teste v1 foi inspecionado e passa a ser conjunto de regressão; não deve ser tratado como teste cego em ajustes posteriores.
