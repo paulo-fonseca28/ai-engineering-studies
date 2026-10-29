@@ -33,3 +33,20 @@ Os relatórios `demo` não contêm métricas de qualidade de LLM. A avaliação 
 ## Resultados publicados
 
 [Baseline v1](RESULTS.md): experimentos concluídos nos dois modos e nas duas partições. O teste v1 foi inspecionado e passa a ser conjunto de regressão; não deve ser tratado como teste cego em ajustes posteriores.
+
+## Recuperação e fidelidade — v2
+
+`python -m evaluation.compare --output <arquivo.json>` compara as três buscas apenas em desenvolvimento. Recall usa documentos de referência; geração não é chamada. As ordens de execução são alternadas por repetição. A primeira busca densa inclui inicialização; vetores de documentos são compartilhados em cache, vetores de consultas são calculados por busca. Latência não inclui geração e não é comparável diretamente à latência do fluxo v1.
+
+O runner aceita `--strategy lexical|semantic|hybrid` e mede as fontes efetivamente usadas na resposta. Falhas de recuperação invalidam o experimento com saída não zero. Os relatórios v1 permanecem imutáveis.
+
+Para preparar revisão de fidelidade:
+
+```bash
+.venv/bin/python -m evaluation.review --report evaluation/reports/dev-ollama-v1.json --output evaluation/reports/local-review.json
+.venv/bin/python -m evaluation.review --summarize evaluation/reports/local-review.json
+```
+
+A ficha inclui todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Todas as anotações começam como `pending`; os resultados não recebem aprovação automática. Valores: `supported` (afirmações sustentadas e resposta adequada), `unsupported` (alguma afirmação não sustentada/contraditória), `incomplete` (não responde adequadamente, sem erro factual claro), `abstained` (não responde por falta de evidência ou erro técnico). Cada anotação exige justificativa. Revisão `ai_assisted` não equivale a validação humana independente.
+
+A semântica foi selecionada para o experimento de geração pelo maior Recall@1 no desenvolvimento. Não há conclusão em teste novo nesta etapa; `test.jsonl` continua sendo regressão exposta.

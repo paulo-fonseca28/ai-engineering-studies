@@ -12,7 +12,7 @@ import subprocess
 from urllib.parse import urlsplit, urlunsplit
 import urllib.request
 
-from supportops.core import DATA, answer, ingest, retrieve
+from supportops.core import DATA, answer
 from supportops.llm import OPTIONS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,7 +70,7 @@ def provider_metadata():
 def fingerprint():
     paths = list((ROOT / "supportops").rglob("*.py")) + list((ROOT / "supportops/prompts").glob("*.txt"))
     paths += list(DATA.glob("*.md")) + list((ROOT / "evaluation").glob("*.jsonl"))
-    paths += [Path(__file__), ROOT / "requirements.txt"]
+    paths += list((ROOT / "evaluation").glob("*.py")) + [ROOT / "requirements.txt"]
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(paths)}
 
 
@@ -101,7 +101,7 @@ def summarize(rows, mode):
 
 def markdown(report):
     s = report["summary"]
-    lines = [f"# Baseline {report['split']} / {report['mode']}", "", f"Executado em {report['created_at']}. Casos: {report['cases']}; repetições: {report['repeats']}.", "",
+    lines = [f"# Evaluation {report['split']} / {report['mode']} / {report.get('strategy', 'lexical')}", "", f"Executado em {report['created_at']}. Casos: {report['cases']}; repetições: {report['repeats']}.", "",
              "| Métrica | Valor |", "| --- | --- |"]
     for key, value in s.items():
         if key != "llm":
@@ -119,6 +119,7 @@ def markdown(report):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--split", choices=["dev", "test"], default="dev")
+    parser.add_argument("--strategy", choices=["lexical", "semantic", "hybrid"], default="lexical")
     parser.add_argument("--mode", choices=["demo", "ollama"], default="demo")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
@@ -132,12 +133,11 @@ def main():
         raise ValueError("Overlapping questions across splits")
     provider = provider_metadata() if args.mode == "ollama" else None
     cases = datasets[args.split]
-    chunks = ingest()
     rows = []
     for repeat in range(1, args.repeats + 1):
         for case in cases:
-            result = answer(case["question"], mode=args.mode)
-            ranked = retrieve(case["question"], chunks)
+            result = answer(case["question"], mode=args.mode, strategy=args.strategy)
+            ranked = result["sources"]
             cited_docs = [s["document"] for s in result["sources"] if s["id"] in result["citations"]]
             rows.append(dict(case, repeat=repeat, response=result,
                              recall_at_1=recall(case["expected_documents"], [s["document"] for s in ranked[:1]]),
@@ -146,7 +146,7 @@ def main():
             print(f"{repeat}/{args.repeats} {case['id']} {result['inference_status']}", flush=True)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True)
-    report = {"protocol": "baseline-v1", "created_at": datetime.now(timezone.utc).isoformat(),
+    report = {"protocol": "retrieval-v2", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
               "split": args.split, "mode": args.mode, "cases": len(cases), "repeats": args.repeats,
               "environment": {"python": platform.python_version(), "os": platform.system(), "kernel": platform.release(), "architecture": platform.machine()},
               "git_revision": revision.stdout.strip(), "working_tree_dirty": bool(dirty.stdout.strip()),
@@ -155,6 +155,8 @@ def main():
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.output.with_suffix(".md").write_text(markdown(report), encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
+    if any(row["response"]["inference_status"] == "skipped_retrieval_error" for row in rows):
+        raise SystemExit("Retrieval failure; report saved and experiment invalid")
     if args.mode == "ollama" and not report["summary"]["llm"]["completed"]:
         raise SystemExit("No successful inference; report saved with failures")
 

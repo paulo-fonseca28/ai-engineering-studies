@@ -5,7 +5,7 @@ Assistente de suporte para uma operação **fictícia** de delivery. Consulta se
 ## O que funciona
 
 - Ingestão de Markdown, fragmentação e IDs com hash SHA-256 do documento.
-- Recuperação lexical em memória (baseline próprio, não BM25).
+- Recuperação lexical, semântica com embeddings locais e híbrida por fusão de rankings.
 - API FastAPI com contratos de entrada e saída, rastro e duração por solicitação.
 - Modo demonstrativo sem credenciais e integração local com Ollama, prompt versionado e saída estruturada.
 - Avaliação por comando, com conjuntos separados de desenvolvimento/teste e relatórios JSON/Markdown.
@@ -44,6 +44,19 @@ O [Qwen3 1.7B](https://ollama.com/library/qwen3:1.7b) é o modelo inicial de exp
 
 Endpoint padrão: `http://localhost:11434/api/chat`, configurável por `OLLAMA_URL`. O aplicativo lê variáveis do ambiente; `.env.example` não é carregado automaticamente. Inferência tem timeout de 120 segundos. O campo `inference_status` distingue `completed`, `failed`, `skipped_no_sources` e `demo`; falhas sinalizam revisão e preservam contagens de tokens quando disponíveis. `/health` verifica a aplicação, não a disponibilidade do modelo.
 
+## Estratégias de recuperação
+
+O padrão continua `lexical`, sem dependência de embeddings. Para experimentar a busca semântica:
+
+```bash
+ollama pull qwen3-embedding:0.6b
+SUPPORTOPS_RETRIEVAL=semantic SUPPORTOPS_MODE=ollama OLLAMA_MODEL=qwen3:1.7b .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
+```
+
+Use `SUPPORTOPS_RETRIEVAL=hybrid` para fusão RRF. `OLLAMA_EMBEDDING_MODEL` pode alterar o modelo de embeddings; o padrão é `qwen3-embedding:0.6b`. `demo` com busca semântica não gera texto com LLM, mas precisa do serviço de embeddings. Falha de recuperação produz `skipped_retrieval_error` e revisão, sem fallback lexical silencioso.
+
+A busca semântica usa similaridade de cosseno, instrução de consulta e vetores dos documentos em cache por conteúdo, digest do modelo e endpoint. O cache é local ao processo, não um banco persistente. Não há limiar de rejeição: top-k retorna documentos mesmo quando não sustentam uma resposta.
+
 ## Avaliação
 
 ```bash
@@ -53,7 +66,16 @@ OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --mode ol
 
 Escolha um novo nome de saída por experimento; relatórios existentes não são sobrescritos. O protocolo contém 21 casos em cada conjunto: 12 respondíveis, 3 ambíguos, 3 sem resposta e 3 adversariais. Veja [método e limites](evaluation/README.md). Métricas de citações verificam documentos/IDs, não correção semântica da resposta.
 
-## Resultados atuais
+## Comparação de recuperação no desenvolvimento
+
+```bash
+.venv/bin/python -m evaluation.compare --repeats 3 --output evaluation/reports/local-retrieval.json
+OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strategy semantic --mode ollama --repeats 3 --output evaluation/reports/local-semantic.json
+```
+
+[Comparação v2](evaluation/reports/dev-retrieval-v2.md): Recall@1 lexical 50,0%, semântico 100% e híbrido 91,7%, em apenas 12 perguntas respondíveis de desenvolvimento. Ambas as alternativas densas tiveram Recall@3 de 100%, mas retornaram documentos também nos três casos sem resposta. Não é resultado de teste independente nem evidência de correção das respostas.
+
+## Resultados do baseline v1
 
 Inferência real validada localmente com Qwen3 via Ollama. **22 testes passaram**, mais verificações por HTTP nos modos demo e real. O experimento congelado realizou 252 execuções de fluxo, incluindo 96 chamadas reais ao modelo.
 
@@ -67,6 +89,6 @@ O modelo apresentou contradições e afirmações indevidas em casos adversariai
 
 Dependências diretas em `requirements.in`; ambiente validado com versões transitivas fixadas em `requirements.txt`. Template de CI em `docs/ci-tests.yml`; ativação no GitHub Actions depende de credencial com permissão de workflows. CI remoto não executado.
 
-Próximas etapas: comparar recuperação semântica e híbrida no desenvolvimento, avaliar ataques em documentos recuperados, revisar respostas, adicionar PostgreSQL/pgvector, pedidos sintéticos, ferramentas com confirmação/idempotência, interface e n8n.
+Próximas etapas: avaliar fidelidade e rejeição de evidências insuficientes, validar em novo teste reservado, avaliar ataques em documentos recuperados, adicionar PostgreSQL/pgvector, pedidos sintéticos, ferramentas com confirmação/idempotência, interface e n8n.
 
 [Arquitetura](docs/architecture.md) · [Limitações](docs/limitations.md) · [Decisões](docs/decisions/0002-evaluation.md)

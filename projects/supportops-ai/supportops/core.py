@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .llm import InferenceError, infer
+from .retrieval import RetrievalError, search
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "policies"
 STOPWORDS = set("a o as os um uma de da do das dos em no na e ou que para por com meu minha quero como qual posso".split())
@@ -46,18 +47,27 @@ def retrieve(question, chunks, k=3):
     return sorted(ranked, key=lambda c: (-c["score"], c["id"]))[:k]
 
 
-def answer(question, mode="demo", directory=DATA):
+def answer(question, mode="demo", directory=DATA, strategy="lexical"):
     if mode not in {"demo", "ollama"}:
         raise ValueError("Modo inválido")
     if not isinstance(question, str) or not 1 <= len(question.strip()) <= 4000:
         raise ValueError("Pergunta deve ter entre 1 e 4000 caracteres")
     started = time.perf_counter()
     chunks = ingest(directory)
-    sources = retrieve(question, chunks)
-    trace = [{"step": "retrieval", "strategy": "lexical", "chunks_indexed": len(chunks), "sources_found": len(sources)}]
+    retrieval_error = None
+    try:
+        sources, retrieval_info = search(question, chunks, strategy)
+    except RetrievalError as error:
+        sources = []
+        retrieval_error = str(error)
+        retrieval_info = {"strategy": strategy, "error": retrieval_error}
+    trace = [{"step": "retrieval", **retrieval_info, "chunks_indexed": len(chunks), "sources_found": len(sources)}]
     usage = None
     inference_status = "skipped_no_sources"
     result = {"answer": "Não há evidências suficientes. Encaminhe para revisão humana.", "citations": [], "needs_review": True}
+    if retrieval_error:
+        inference_status = "skipped_retrieval_error"
+        result["answer"] = "Não foi possível consultar as fontes. É necessária revisão humana."
     if sources and mode == "demo":
         inference_status = "demo"
         result = {"answer": "Demonstração: trechos recuperados, sem inferência de LLM.\n" + "\n".join(s["text"] for s in sources), "citations": [s["id"] for s in sources], "needs_review": True}

@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field, field_validator
 from .core import answer
 
-app = FastAPI(title="SupportOps AI", version="0.2.0")
+app = FastAPI(title="SupportOps AI", version="0.3.0")
+STRATEGY = os.environ.get("SUPPORTOPS_RETRIEVAL", "lexical")
+if STRATEGY not in {"lexical", "semantic", "hybrid"}:
+    raise RuntimeError("SUPPORTOPS_RETRIEVAL inválido")
 MODE = os.environ.get("SUPPORTOPS_MODE", "demo")
 if MODE not in {"demo", "ollama"}:
     raise RuntimeError("SUPPORTOPS_MODE deve ser demo ou ollama")
@@ -37,7 +40,7 @@ class Answer(BaseModel):
     sources: list[Source]
     mode: Literal["demo", "ollama"]
     simulated: bool
-    inference_status: Literal["demo", "skipped_no_sources", "completed", "failed"]
+    inference_status: Literal["demo", "skipped_no_sources", "completed", "failed", "skipped_retrieval_error"]
     usage: dict | None
     trace_id: str
     trace: list[dict]
@@ -46,9 +49,9 @@ class Answer(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "mode": MODE}
+    return {"status": "ok", "mode": MODE, "retrieval": STRATEGY}
 
 
 @app.post("/tickets", response_model=Answer)
 def create_ticket(ticket: Ticket):
-    return answer(ticket.question, mode=MODE)
+    return answer(ticket.question, mode=MODE, strategy=STRATEGY)

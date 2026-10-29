@@ -7,3 +7,9 @@ O baseline pontua frequência de termos e raridade documental, normalizando pelo
 `supportops/core.py` contém ingestão, recuperação e fluxo. `supportops/llm.py` isola o provedor e carrega `supportops/prompts/answer-v1.txt`. A saída é limitada por JSON Schema e validada novamente em Python. Não há ferramentas externas; o modelo apenas redige. Validação de formato não comprova fidelidade semântica.
 
 `inference_status` torna explícitos demonstração, ausência de fontes, inferência concluída e erro. Rastros não são persistidos. O runner em `evaluation/run.py` arquiva respostas, métricas, hashes e identificação do provedor. API e avaliação usam o mesmo fluxo.
+
+## Recuperação v2
+
+`supportops/retrieval.py` oferece estratégias lexical, semântica e híbrida. A API seleciona por `SUPPORTOPS_RETRIEVAL`; o runner por `--strategy`. Semântica consulta `/api/embed`; híbrida combina rankings lexical e semântico por RRF. Vetores de documentos ficam em cache na memória; documentos continuam versionados e lidos em cada solicitação. Digest do modelo e estratégia são incluídos no rastro. Não há pgvector nesta etapa.
+
+`evaluation/compare.py` mede recuperação em desenvolvimento; `evaluation/review.py` prepara uma ficha para julgar afirmações, registrando origem e tipo de revisor.
