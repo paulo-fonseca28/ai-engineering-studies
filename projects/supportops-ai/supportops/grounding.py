@@ -7,7 +7,7 @@ from .llm import InferenceError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "data/grounding-v3.json"
-PROMPT_PATH = Path(__file__).parent / "prompts/select-v1.txt"
+PROMPT_PATH = Path(__file__).parent / "prompts/select-v2.txt"
 OPTIONS = {"temperature": 0, "seed": 42, "num_predict": 128, "num_ctx": 4096}
 QUOTE_PREFIX = "Política de demonstração — trecho literal:\n"
 CLARIFICATION = "Pode detalhar o problema e o que deseja saber sobre o pedido? É necessária revisão humana."
@@ -62,9 +62,8 @@ def select_policy(question, sources):
     if not model:
         raise InferenceError("missing_model")
     schema = {"type": "object", "additionalProperties": False,
-              "properties": {"decision": {"type": "string", "enum": ["quote", "clarify", "abstain"]},
-                             "source_id": {"type": "string", "enum": [""] + [s["id"] for s in sources]}},
-              "required": ["decision", "source_id"]}
+              "properties": {"choice": {"type": "string", "enum": ["clarify", "abstain"] + [s["id"] for s in sources]}},
+              "required": ["choice"]}
     payload = {"model": model, "stream": False, "think": False, "format": schema, "options": OPTIONS,
                "messages": [{"role": "system", "content": PROMPT_PATH.read_text(encoding="utf-8")},
                             {"role": "user", "content": json.dumps({"question": question, "sources": sources}, ensure_ascii=False)}]}
@@ -80,7 +79,14 @@ def select_policy(question, sources):
         if result.get("done_reason") == "length":
             raise InferenceError("truncated_selection")
         selected = json.loads(result["message"]["content"])
-        response = render(selected, sources)
+        if not isinstance(selected, dict) or set(selected) != {"choice"} or not isinstance(selected["choice"], str):
+            raise InferenceError("invalid_selection_contract")
+        choice = selected["choice"]
+        if choice in {"clarify", "abstain"}:
+            selection = {"decision": choice, "source_id": ""}
+        else:
+            selection = {"decision": "quote", "source_id": choice}
+        response = render(selection, sources)
     except InferenceError as error:
         error.usage = usage
         raise

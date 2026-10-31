@@ -137,7 +137,7 @@ def markdown(report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--split", choices=["dev", "test", "heldout-v3"], default="dev")
+    parser.add_argument("--split", choices=["dev", "test", "heldout-v3", "heldout-v4"], default="dev")
     parser.add_argument("--strategy", choices=["lexical", "semantic", "hybrid"], default="lexical")
     parser.add_argument("--mode", choices=["demo", "ollama", "grounded"], default="demo")
     parser.add_argument("--repeats", type=int, default=3)
@@ -149,7 +149,7 @@ def main():
         parser.error("--repeats must be positive")
     if args.output.exists() or args.output.with_suffix(".md").exists():
         parser.error("Choose a new report filename; existing experiments are immutable")
-    datasets = {split: load_cases(ROOT / "evaluation" / f"{split}.jsonl") for split in {"dev", "test", args.split}}
+    datasets = {path.stem: load_cases(path) for path in (ROOT / "evaluation").glob("*.jsonl")}
     seen_questions, seen_ids = set(), set()
     for cases in datasets.values():
         questions = {c["question"].strip().casefold() for c in cases}
@@ -175,7 +175,7 @@ def main():
             print(f"{repeat}/{args.repeats} {case['id']} {result['inference_status']}", flush=True)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True)
-    report = {"protocol": "grounding-v3", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
+    report = {"protocol": "grounding-v3.1", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
               "split": args.split, "mode": args.mode, "cases": len(cases), "repeats": args.repeats,
               "environment": {"python": platform.python_version(), "os": platform.system(), "kernel": platform.release(), "architecture": platform.machine()},
               "git_revision": revision.stdout.strip(), "working_tree_dirty": bool(dirty.stdout.strip()),

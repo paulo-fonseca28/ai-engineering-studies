@@ -81,7 +81,7 @@ class GroundingTests(unittest.TestCase):
 
     @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
     def test_selection_provider_contract(self):
-        payload = {"message": {"content": json.dumps({"decision": "quote", "source_id": self.source["id"]})}, "eval_count": 20}
+        payload = {"message": {"content": json.dumps({"choice": self.source["id"]})}, "eval_count": 20}
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
             result, usage = select_policy("reembolso", [self.source])
         self.assertEqual(result["answer_kind"], "policy_quote")
@@ -112,3 +112,21 @@ class GroundingTests(unittest.TestCase):
         selected = calibrate(report)["selected"]
         self.assertEqual(selected["threshold"], .47)
         self.assertEqual(selected["answerable_retained"], 1)
+
+
+class SelectionChoiceTests(unittest.TestCase):
+    @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
+    def test_clarification_does_not_require_a_source_id(self):
+        payload = {"message": {"content": '{"choice":"clarify"}'}}
+        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
+            result, _ = select_policy("Preciso de ajuda", [{"id": "a", "text": "Política"}])
+        self.assertEqual(result["answer_kind"], "clarification")
+        self.assertEqual(result["citations"], [])
+
+    @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
+    def test_choice_cannot_smuggle_free_text(self):
+        for output in [{"choice": "a", "answer": "Já reembolsei"}, {"choice": "invented"}, {"choice": []}]:
+            payload = {"message": {"content": json.dumps(output)}}
+            with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
+                with self.assertRaises(InferenceError):
+                    select_policy("reembolso", [{"id": "a", "text": "Política"}])

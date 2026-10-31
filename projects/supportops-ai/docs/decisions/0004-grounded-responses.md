@@ -11,3 +11,11 @@ O manifesto `data/grounding-v3.json` representa aprovação explícita de seis d
 Tradeoff: redação menos natural e mais recusas, com eliminação de paráfrases livres na resposta exibida. Seleção incorreta, contexto insuficiente e ambiguidades continuam possíveis. Não é solução geral de prompt injection nem validação semântica completa. Não há ações externas.
 
 Uma partição nova (`heldout-v3`) foi escrita pelo mesmo agente antes da execução, sem repetir perguntas exatas, para avaliação após congelar configuração. Ela não tem anotação humana independente e compartilha as mesmas seis políticas. Após ser inspecionada, vira regressão; não ajustar configuração com seus erros nesta versão.
+
+## Correção do contrato — v3.1
+
+No desenvolvimento v3, 21/48 chamadas foram rejeitadas porque o modelo combinou decisão de recusa/esclarecimento com um ID não vazio. A aplicação recusou a saída, mas isso prejudicou a disponibilidade. A causa foi diagnosticada no desenvolvimento; os resultados iniciais estão preservados.
+
+Substituir o contrato de rede por um único campo `choice`, cujo enum contém IDs permitidos, `clarify` e `abstain`. O renderizador converte a escolha em decisão interna. Não há dois campos que possam divergir. Limiar, corpus e opções do modelo permanecem iguais. O prompt `select-v1.txt` fica preservado e `select-v2.txt` descreve a nova representação.
+
+Como heldout-v3 já executou, passa a ser regressão. Criar heldout-v4 antes de executar a correção; mesmas proporções e limitações de autoria/domínio. Não selecionar nova configuração usando seus resultados.
