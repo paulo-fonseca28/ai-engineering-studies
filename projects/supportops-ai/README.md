@@ -57,6 +57,18 @@ Use `SUPPORTOPS_RETRIEVAL=hybrid` para fusão RRF. `OLLAMA_EMBEDDING_MODEL` pode
 
 A busca semântica usa similaridade de cosseno, instrução de consulta e vetores dos documentos em cache por conteúdo, digest do modelo e endpoint. O cache é local ao processo, não um banco persistente. Não há limiar de rejeição: top-k retorna documentos mesmo quando não sustentam uma resposta.
 
+## Respostas restritas com fontes aprovadas
+
+```bash
+SUPPORTOPS_MODE=grounded SUPPORTOPS_RETRIEVAL=semantic OLLAMA_MODEL=qwen3:1.7b .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
+```
+
+Este modo requer os dois modelos já apresentados. O modelo seleciona uma política, pede esclarecimento ou recusa. O código exibe o fragmento integral aprovado ou uma mensagem fixa: não exibe paráfrases geradas. `answer_kind` diferencia `policy_quote`, `clarification` e `abstention`; `needs_review` é sempre verdadeiro.
+
+Documentos precisam corresponder ao manifesto versionado em `data/grounding-v3.json`. Fontes novas/adulteradas são removidas antes da busca. A similaridade mínima de 0,47 foi calibrada apenas em desenvolvimento e vale para o digest indicado no manifesto. Um modelo diferente exige nova calibração. Recusas por limiar aparecem como `skipped_evidence_gate`; falhas de integridade/configuração são explícitas no rastro.
+
+Preservar o texto da política não prova que ela responde à pergunta. O modo troca redação livre por citações e pode recusar perguntas legítimas. Veja [a decisão e os limites](docs/decisions/0004-grounded-responses.md).
+
 ## Avaliação
 
 ```bash

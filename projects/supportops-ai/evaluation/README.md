@@ -54,3 +54,16 @@ A semântica foi selecionada para o experimento de geração pelo maior Recall@1
 ## Resultados v2
 
 [Recuperação e fidelidade](RESULTS_V2.md): comparação em desenvolvimento, geração com busca semântica e revisão assistida por IA dos 42 casos da primeira repetição. Os relatórios separam resultados de recuperação, formato e fidelidade anotada. Tokens de embeddings ainda não são contabilizados.
+
+## Protocolo grounded v3
+
+```bash
+.venv/bin/python -m evaluation.calibrate --report evaluation/reports/dev-retrieval-v2.json --output evaluation/reports/local-threshold.json
+OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strategy semantic --mode grounded --repeats 3 --output evaluation/reports/local-grounded-dev.json
+```
+
+A calibração usa apenas a primeira repetição semântica de desenvolvimento. A grade e a regra estão no código; o relatório preserva todos os candidatos, perdas de cobertura e hash de origem. A avaliação v3 inclui hashes da configuração/manifesto. Recall agora considera apenas fontes admitidas pelo limiar, não todo o ranking bruto.
+
+`heldout-v3.jsonl` contém 24 novas perguntas: 12 respondíveis, 6 sem resposta, 3 ambíguas e 3 adversariais. Foi elaborado pelo agente, sem anotação humana independente, antes de executar esta configuração. Rodar `--split heldout-v3` somente após congelar a configuração. Ele usa as mesmas políticas, portanto não mede generalização de domínio.
+
+Métricas adicionais: integridade literal das citações; proporção de respondíveis com citação do documento esperado; proporção de perguntas sem resposta sem citação; esclarecimentos em ambiguidades. Integridade literal não mede relevância. Revisão sinalizada é constante por projeto, não uma capacidade aprendida. Falhas técnicas e recusas permanecem visíveis. Não chamar uma citação literal de geração livre correta.

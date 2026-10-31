@@ -14,6 +14,7 @@ import urllib.request
 
 from supportops.core import DATA, answer
 from supportops.llm import OPTIONS
+from supportops.grounding import OPTIONS as SELECTION_OPTIONS, QUOTE_PREFIX
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -69,6 +70,7 @@ def provider_metadata():
 
 def fingerprint():
     paths = list((ROOT / "supportops").rglob("*.py")) + list((ROOT / "supportops/prompts").glob("*.txt"))
+    paths += list((ROOT / "data").glob("*.json"))
     paths += list(DATA.glob("*.md")) + list((ROOT / "evaluation").glob("*.jsonl"))
     paths += list((ROOT / "evaluation").glob("*.py")) + [ROOT / "requirements.txt"]
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(paths)}
@@ -85,7 +87,7 @@ def summarize(rows, mode):
                "unanswerable_retrieval_rate": mean([bool(r["response"]["sources"]) for r in unknown]),
                "latency_ms_median": statistics.median(latencies) if latencies else None,
                "latency_ms_p95": percentile95(latencies), "llm": None}
-    if mode == "ollama":
+    if mode in {"ollama", "grounded"}:
         summary["llm"] = {"attempted": len(attempted),
                           "completed": sum(r["response"]["inference_status"] == "completed" for r in attempted),
                           "contract_acceptance_rate": mean([r["response"]["inference_status"] == "completed" for r in attempted]),
@@ -96,6 +98,20 @@ def summarize(rows, mode):
             values = [(r["response"].get("usage") or {}).get(key) for r in attempted]
             summary["llm"][key + "_observed"] = sum(v for v in values if isinstance(v, int))
             summary["llm"][key + "_missing_calls"] = sum(v is None for v in values)
+    if mode == "grounded":
+        quotes = [r for r in rows if r["response"].get("answer_kind") == "policy_quote"]
+        def quote_matches(row):
+            response = row["response"]
+            selected = [s for s in response["sources"] if s["id"] in response["citations"]]
+            return len(selected) == 1 and response["answer"] == QUOTE_PREFIX + selected[0]["text"]
+        summary["grounded"] = {
+            "policy_quotes": len(quotes),
+            "literal_quote_integrity_rate": mean([quote_matches(r) for r in quotes]),
+            "correct_document_quote_rate_answerable": mean([r["response"].get("answer_kind") == "policy_quote" and r["citation_document_recall"] == 1 for r in answerable]),
+            "unanswerable_no_quote_rate": mean([r["response"].get("answer_kind") != "policy_quote" for r in unknown]),
+            "clarification_rate_ambiguous": mean([r["response"].get("answer_kind") == "clarification" for r in rows if r["category"] == "ambiguous"]),
+            "adversarial_quote_count": sum(r["response"].get("answer_kind") == "policy_quote" for r in rows if r["category"] == "adversarial"),
+            "semantic_correctness": None}
     return summary
 
 
@@ -104,11 +120,14 @@ def markdown(report):
     lines = [f"# Evaluation {report['split']} / {report['mode']} / {report.get('strategy', 'lexical')}", "", f"Executado em {report['created_at']}. Casos: {report['cases']}; repetições: {report['repeats']}.", "",
              "| Métrica | Valor |", "| --- | --- |"]
     for key, value in s.items():
-        if key != "llm":
+        if key not in {"llm", "grounded"}:
             lines.append(f"| {key} | {value} |")
     if s["llm"]:
         for key, value in s["llm"].items():
             lines.append(f"| llm.{key} | {value} |")
+    if "grounded" in s:
+        for key, value in s["grounded"].items():
+            lines.append(f"| grounded.{key} | {value} |")
     lines += ["", "Valores nulos não foram medidos. Citações por ID não comprovam fidelidade semântica. Demonstração não mede qualidade de LLM.", "",
               "## Falhas de recuperação (primeira repetição)", ""]
     failures = [r for r in report["results"] if r["repeat"] == 1 and r["category"] == "answerable" and r["recall_at_3"] < 1]
@@ -118,20 +137,30 @@ def markdown(report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--split", choices=["dev", "test"], default="dev")
+    parser.add_argument("--split", choices=["dev", "test", "heldout-v3"], default="dev")
     parser.add_argument("--strategy", choices=["lexical", "semantic", "hybrid"], default="lexical")
-    parser.add_argument("--mode", choices=["demo", "ollama"], default="demo")
+    parser.add_argument("--mode", choices=["demo", "ollama", "grounded"], default="demo")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.mode == "grounded" and args.strategy != "semantic":
+        parser.error("grounded requires --strategy semantic")
     if args.repeats < 1:
         parser.error("--repeats must be positive")
     if args.output.exists() or args.output.with_suffix(".md").exists():
         parser.error("Choose a new report filename; existing experiments are immutable")
-    datasets = {split: load_cases(ROOT / "evaluation" / f"{split}.jsonl") for split in ("dev", "test")}
-    if {c["question"].strip().casefold() for c in datasets["dev"]} & {c["question"].strip().casefold() for c in datasets["test"]}:
-        raise ValueError("Overlapping questions across splits")
-    provider = provider_metadata() if args.mode == "ollama" else None
+    datasets = {split: load_cases(ROOT / "evaluation" / f"{split}.jsonl") for split in {"dev", "test", args.split}}
+    seen_questions, seen_ids = set(), set()
+    for cases in datasets.values():
+        questions = {c["question"].strip().casefold() for c in cases}
+        ids = {c["id"] for c in cases}
+        if questions & seen_questions or ids & seen_ids:
+            raise ValueError("Overlapping questions or IDs across splits")
+        seen_questions.update(questions)
+        seen_ids.update(ids)
+    provider = provider_metadata() if args.mode != "demo" else None
+    if args.mode == "grounded":
+        provider["options"] = SELECTION_OPTIONS
     cases = datasets[args.split]
     rows = []
     for repeat in range(1, args.repeats + 1):
@@ -146,7 +175,7 @@ def main():
             print(f"{repeat}/{args.repeats} {case['id']} {result['inference_status']}", flush=True)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True)
-    report = {"protocol": "retrieval-v2", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
+    report = {"protocol": "grounding-v3", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
               "split": args.split, "mode": args.mode, "cases": len(cases), "repeats": args.repeats,
               "environment": {"python": platform.python_version(), "os": platform.system(), "kernel": platform.release(), "architecture": platform.machine()},
               "git_revision": revision.stdout.strip(), "working_tree_dirty": bool(dirty.stdout.strip()),
@@ -155,9 +184,9 @@ def main():
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.output.with_suffix(".md").write_text(markdown(report), encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
-    if any(row["response"]["inference_status"] == "skipped_retrieval_error" for row in rows):
+    if any(row["response"]["inference_status"] in {"skipped_retrieval_error", "skipped_integrity_error", "skipped_untrusted_corpus"} for row in rows):
         raise SystemExit("Retrieval failure; report saved and experiment invalid")
-    if args.mode == "ollama" and not report["summary"]["llm"]["completed"]:
+    if args.mode != "demo" and not report["summary"]["llm"]["completed"]:
         raise SystemExit("No successful inference; report saved with failures")
 
 

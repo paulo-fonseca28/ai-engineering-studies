@@ -4,13 +4,16 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field, field_validator
 from .core import answer
 
-app = FastAPI(title="SupportOps AI", version="0.3.0")
+app = FastAPI(title="SupportOps AI", version="0.4.0")
 STRATEGY = os.environ.get("SUPPORTOPS_RETRIEVAL", "lexical")
 if STRATEGY not in {"lexical", "semantic", "hybrid"}:
     raise RuntimeError("SUPPORTOPS_RETRIEVAL inválido")
 MODE = os.environ.get("SUPPORTOPS_MODE", "demo")
-if MODE not in {"demo", "ollama"}:
-    raise RuntimeError("SUPPORTOPS_MODE deve ser demo ou ollama")
+if MODE not in {"demo", "ollama", "grounded"}:
+    raise RuntimeError("SUPPORTOPS_MODE deve ser demo, ollama ou grounded")
+
+if MODE == "grounded" and STRATEGY != "semantic":
+    raise RuntimeError("O modo grounded requer SUPPORTOPS_RETRIEVAL=semantic")
 
 
 class Ticket(BaseModel):
@@ -38,9 +41,10 @@ class Answer(BaseModel):
     citations: list[str]
     needs_review: bool
     sources: list[Source]
-    mode: Literal["demo", "ollama"]
+    mode: Literal["demo", "ollama", "grounded"]
+    answer_kind: Literal["demo", "freeform", "policy_quote", "clarification", "abstention"]
     simulated: bool
-    inference_status: Literal["demo", "skipped_no_sources", "completed", "failed", "skipped_retrieval_error"]
+    inference_status: Literal["demo", "skipped_no_sources", "completed", "failed", "skipped_retrieval_error", "skipped_evidence_gate", "skipped_integrity_error", "skipped_untrusted_corpus"]
     usage: dict | None
     trace_id: str
     trace: list[dict]

@@ -1,0 +1,14 @@
+{
+  "version": "grounding-v3",
+  "threshold": 0.47,
+  "embedding_model": "qwen3-embedding:0.6b",
+  "embedding_digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+  "approved_documents": {
+    "address.md": "b7086b91747ea1da763d4c6bfeec889b002e24f6939bbda60ef13f7e6f68fc0c",
+    "cancellation.md": "9a72f150c547bba191527e8cec9482a9f66fc0bbfd12c6bc86aa4be6d53398a5",
+    "delivery.md": "7db3ce7f1dbfcc3efc948ecd9cd363438319aae1601b80150d47c52af6df9079",
+    "missing_items.md": "ef4b24a1a2dd454913349e6c148f0ac4b759e2fd21f950674b1ffbea9a437371",
+    "payment.md": "a72b5919ebbd7d16430081fe0ed17797bcd4ad6abfc1a583f3e7b9cad38eed42",
+    "refund.md": "99c8fd913355cc62577ab51322a0655e667e2a4fc2d4cfb61bb996e7d5f9fa94"
+  }
+}

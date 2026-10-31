@@ -1,0 +1,77 @@
+{
+  "protocol": "threshold-v3",
+  "selection_split": "dev",
+  "selection_rule": "Reject all development unanswerable cases, maximize answerable retention, then lowest threshold",
+  "answerable_cases": 12,
+  "unanswerable_cases": 3,
+  "candidates": [
+    {
+      "threshold": 0.0,
+      "answerable_retained": 12,
+      "unanswerable_rejected": 0
+    },
+    {
+      "threshold": 0.3,
+      "answerable_retained": 12,
+      "unanswerable_rejected": 1
+    },
+    {
+      "threshold": 0.4,
+      "answerable_retained": 12,
+      "unanswerable_rejected": 1
+    },
+    {
+      "threshold": 0.45,
+      "answerable_retained": 11,
+      "unanswerable_rejected": 2
+    },
+    {
+      "threshold": 0.47,
+      "answerable_retained": 10,
+      "unanswerable_rejected": 3
+    },
+    {
+      "threshold": 0.5,
+      "answerable_retained": 10,
+      "unanswerable_rejected": 3
+    },
+    {
+      "threshold": 0.55,
+      "answerable_retained": 7,
+      "unanswerable_rejected": 3
+    },
+    {
+      "threshold": 0.6,
+      "answerable_retained": 7,
+      "unanswerable_rejected": 3
+    },
+    {
+      "threshold": 0.7,
+      "answerable_retained": 5,
+      "unanswerable_rejected": 3
+    }
+  ],
+  "selected": {
+    "threshold": 0.47,
+    "answerable_retained": 10,
+    "unanswerable_rejected": 3
+  },
+  "embedding": {
+    "model": "qwen3-embedding:0.6b",
+    "digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+    "details": {
+      "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+      "format": "gguf",
+      "family": "qwen3",
+      "families": [
+        "qwen3"
+      ],
+      "parameter_size": "595.78M",
+      "quantization_level": "Q8_0",
+      "context_length": 32768,
+      "embedding_length": 1024,
+      "runner": "ggml"
+    }
+  },
+  "source_sha256": "a35e277acd465004e3e1d13275229ffeaea64a24c9ee874507278434e8dd5c71"
+}

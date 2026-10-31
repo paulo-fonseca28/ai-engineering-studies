@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from .llm import InferenceError, infer
 from .retrieval import RetrievalError, search
+from .grounding import ABSTENTION, approved_chunks, gate, load_config, select_policy
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "policies"
 STOPWORDS = set("a o as os um uma de da do das dos em no na e ou que para por com meu minha quero como qual posso".split())
@@ -23,7 +24,7 @@ def tokens(text):
 def ingest(directory=DATA):
     chunks = []
     for path in sorted(directory.glob("*.md")):
-        raw = path.read_text(encoding="utf-8")
+        raw = path.read_bytes().decode("utf-8")
         version = hashlib.sha256(raw.encode()).hexdigest()
         title = raw.splitlines()[0].lstrip("# ") if raw else path.stem
         for index, paragraph in enumerate(re.split(r"\n\s*\n", raw)):
@@ -48,38 +49,59 @@ def retrieve(question, chunks, k=3):
 
 
 def answer(question, mode="demo", directory=DATA, strategy="lexical"):
-    if mode not in {"demo", "ollama"}:
+    if mode not in {"demo", "ollama", "grounded"}:
         raise ValueError("Modo inválido")
+    if mode == "grounded" and strategy != "semantic":
+        raise ValueError("O modo grounded requer busca semantic")
     if not isinstance(question, str) or not 1 <= len(question.strip()) <= 4000:
         raise ValueError("Pergunta deve ter entre 1 e 4000 caracteres")
     started = time.perf_counter()
     chunks = ingest(directory)
-    retrieval_error = None
-    try:
-        sources, retrieval_info = search(question, chunks, strategy)
-    except RetrievalError as error:
-        sources = []
-        retrieval_error = str(error)
-        retrieval_info = {"strategy": strategy, "error": retrieval_error}
-    trace = [{"step": "retrieval", **retrieval_info, "chunks_indexed": len(chunks), "sources_found": len(sources)}]
+    trace = []
+    sources = []
     usage = None
     inference_status = "skipped_no_sources"
-    result = {"answer": "Não há evidências suficientes. Encaminhe para revisão humana.", "citations": [], "needs_review": True}
-    if retrieval_error:
+    result = {"answer": ABSTENTION, "citations": [], "needs_review": True, "answer_kind": "abstention"}
+    try:
+        if mode == "grounded":
+            config = load_config()
+            original_count = len(chunks)
+            chunks = approved_chunks(chunks, config)
+            trace.append({"step": "source_integrity", "approved_chunks": len(chunks), "rejected_chunks": original_count - len(chunks)})
+        sources, retrieval_info = search(question, chunks, strategy)
+        trace.append({"step": "retrieval", **retrieval_info, "chunks_indexed": len(chunks), "sources_found": len(sources)})
+        if mode == "grounded" and sources:
+            original_count = len(sources)
+            sources = gate(sources, retrieval_info, config)
+            trace.append({"step": "evidence_gate", "threshold": config["threshold"], "accepted_sources": len(sources), "rejected_sources": original_count - len(sources)})
+            if not sources:
+                inference_status = "skipped_evidence_gate"
+        elif mode == "grounded" and not chunks:
+            inference_status = "skipped_untrusted_corpus"
+    except RetrievalError as error:
+        sources = []
         inference_status = "skipped_retrieval_error"
-        result["answer"] = "Não foi possível consultar as fontes. É necessária revisão humana."
+        trace.append({"step": "retrieval", "strategy": strategy, "error": str(error)})
+    except InferenceError as error:
+        sources = []
+        inference_status = "skipped_integrity_error"
+        trace.append({"step": "evidence_gate", "error": error.code})
     if sources and mode == "demo":
         inference_status = "demo"
-        result = {"answer": "Demonstração: trechos recuperados, sem inferência de LLM.\n" + "\n".join(s["text"] for s in sources), "citations": [s["id"] for s in sources], "needs_review": True}
+        result = {"answer": "Demonstração: trechos recuperados, sem inferência de LLM.\n" + "\n".join(s["text"] for s in sources), "citations": [s["id"] for s in sources], "needs_review": True, "answer_kind": "demo"}
     elif sources:
         try:
-            result, usage = infer(question, sources)
+            if mode == "grounded":
+                result, usage = select_policy(question, sources)
+            else:
+                result, usage = infer(question, sources)
+                result["answer_kind"] = "freeform"
         except (ValueError, KeyError, TypeError, OSError) as error:
             inference_status = "failed"
             usage = error.usage if isinstance(error, InferenceError) else None
-            result["answer"] = "Não foi possível validar a resposta do modelo. Encaminhe para revisão humana."
+            result = {"answer": "Não foi possível validar a resposta do modelo. É necessária revisão humana.", "citations": [], "needs_review": True, "answer_kind": "abstention"}
             trace.append({"step": "inference", "status": "failed", "error": error.code if isinstance(error, InferenceError) else "provider_error"})
         else:
             inference_status = "completed"
-            trace.append({"step": "inference", "status": "completed"})
+            trace.append({"step": "inference", "status": "completed", "response_policy": "approved_quote" if mode == "grounded" else "freeform"})
     return dict(result, inference_status=inference_status, sources=sources, mode=mode, simulated=mode == "demo", usage=usage, trace_id=str(uuid4()), trace=trace, duration_ms=round((time.perf_counter() - started) * 1000, 3))

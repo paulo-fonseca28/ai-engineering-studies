@@ -10,7 +10,7 @@ VERDICTS = {"pending", "supported", "unsupported", "incomplete", "abstained"}
 
 
 def worksheet(report, source_hash):
-    if report["mode"] != "ollama":
+    if report["mode"] not in {"ollama", "grounded"}:
         raise ValueError("Only real-inference reports can be reviewed")
     rows = []
     for case in report["results"]:
