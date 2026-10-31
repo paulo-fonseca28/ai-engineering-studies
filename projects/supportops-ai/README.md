@@ -1,5 +1,7 @@
 # SupportOps AI
 
+> **Checkpoint de 31/10/2026:** o modo `grounded` está em desenvolvimento. A versão atual passou em 55 testes, mas recusou/esclareceu todas as perguntas nos últimos experimentos; a correção com referências curtas ainda está pendente. O padrão demo + lexical continua disponível. Veja o [ponto de retomada](../../CONTINUITY.md).
+
 Assistente de suporte para uma operação **fictícia** de delivery. Consulta seis políticas sintéticas e prepara respostas com fontes; não consulta pedidos reais nem executa cancelamentos, reembolsos ou encaminhamentos.
 
 ## O que funciona
