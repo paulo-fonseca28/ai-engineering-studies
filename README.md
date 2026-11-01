@@ -1,17 +1,16 @@
 # AI Engineering Studies
 
-> **Checkpoint de 31/10/2026:** o modo `grounded` está em desenvolvimento. A versão atual passou em 55 testes, mas recusou/esclareceu todas as perguntas nos últimos experimentos; a correção com referências curtas ainda está pendente. O padrão demo + lexical continua disponível. Veja o [ponto de retomada](CONTINUITY.md).
-
-Estudos pessoais de engenharia de IA com implementações reproduzíveis e resultados verificáveis. Código, testes, documentação e evidências evoluem juntos por entrega.
+Estudos pessoais de engenharia de IA com código, testes, documentação e resultados reproduzíveis.
 
 ## SupportOps AI
 
-Assistente experimental para uma operação fictícia de delivery: API FastAPI, políticas versionadas, busca lexical/semântica/híbrida, geração local com fontes e rastreamento. Modo demonstrativo disponível sem credenciais. Não executa ações externas nem consulta dados reais.
+Assistente experimental para uma operação fictícia de delivery. Implementa API FastAPI, políticas versionadas, busca lexical/semântica/híbrida, inferência local e rastreamento. O modo grounded seleciona políticas aprovadas e devolve citações literais; o modo demonstrativo padrão funciona sem modelos.
 
-**Estado verificado:** 36 testes automatizados passaram, inferência local executada e novas estratégias verificadas por HTTP. No desenvolvimento, Recall@1 foi de 50% para lexical, 100% para semântica e 91,7% para híbrida, em apenas 12 perguntas respondíveis. A geração ainda apresenta contradições e citações indevidas; respostas exigem revisão.
+**Estado verificado em 01/11/2026:** 57 testes passaram, mais nove solicitações HTTP, quatro checks de saúde e dois probes de corpus adulterado. A configuração final citou o documento esperado em 10/12 perguntas respondíveis de desenvolvimento e 12/12 da última bateria sintética. Persistem erros de relevância e ambiguidade; respostas exigem revisão.
 
-- [Execução e arquitetura](projects/supportops-ai/README.md)
-- [Resultados v2: recuperação e fidelidade](projects/supportops-ai/evaluation/RESULTS_V2.md)
-- [Baseline v1 e suas falhas](projects/supportops-ai/evaluation/RESULTS.md)
+- [Executar o projeto](projects/supportops-ai/README.md)
+- [Resultados v3 e limites](projects/supportops-ai/evaluation/RESULTS_V3.md)
+- [Arquitetura](projects/supportops-ai/docs/architecture.md)
+- [Ponto de retomada entre sessões](CONTINUITY.md)
 
-A revisão de fidelidade é assistida por IA, sem validação humana independente. Não há alegações de uso em produção ou impacto de negócio. Próximo incremento: rejeição de evidências insuficientes e melhoria da geração, seguida de nova avaliação reservada.
+Os resultados incluem tentativas malsucedidas. Não há validação humana independente, uso em produção ou impacto de negócio comprovado. DemandLab continua planejado, sem implementação.

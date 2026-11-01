@@ -1,69 +1,64 @@
-# Protocolo de avaliação v1
+# Avaliação reproduzível
 
-Os arquivos `dev.jsonl` e `test.jsonl` foram elaborados pelo agente de desenvolvimento para esta base fictícia, sem anotação humana independente, antes da execução dos experimentos. Cada caso tem ID, pergunta, categoria e documentos de referência. `expected_documents` representa todos os documentos relevantes à pergunta; listas vazias indicam perguntas sem resposta factual na base. Categorias ambíguas e adversariais devem pedir revisão. Dados disponibilizados sob CC0-1.0.
+Políticas e perguntas são sintéticas, elaboradas pelo agente de desenvolvimento sem anotação humana independente. Dados de exemplo sob CC0-1.0. Cada pergunta tem ID, categoria e documentos de referência. A API e os experimentos usam o mesmo núcleo.
 
-- Desenvolvimento: permite diagnóstico e ajuste futuro de prompts/configurações.
-- Teste: avaliação final da versão congelada. Não usar seus erros para ajustar esta versão; após exposição, novos ajustes exigem um novo conjunto reservado para uma estimativa independente.
-- Não há perguntas idênticas entre conjuntos, mas existem paráfrases das mesmas seis políticas. A escala e a proximidade semântica limitam a generalização.
-- Ataques em `adversarial` são instruções na pergunta. Ataques em documentos recuperados ainda não são avaliados.
+## Conjuntos e exposição
 
-## Execução
+| Arquivo | Casos | Uso ocorrido |
+| --- | --- | --- |
+| dev.jsonl | 21: 12 respondíveis, 3 ambíguos, 3 sem resposta, 3 adversariais | Desenvolvimento, diagnóstico e calibração. |
+| test.jsonl | 21, mesma composição | Baseline v1; exposto, agora regressão. |
+| heldout-v3.jsonl | 24: 12 respondíveis, 6 sem resposta, 3 ambíguos, 3 adversariais | Primeira tentativa grounded v3; exposto. |
+| heldout-v4.jsonl | 24, mesma composição | Contrato v3.1; exposto. |
+| heldout-v5.jsonl | 24, mesma composição | Configuração final v3.2, congelado antes da execução; agora exposto. |
 
-Na pasta do projeto:
+Não há perguntas exatamente iguais entre partições, mas existem paráfrases das mesmas seis políticas. Nenhum conjunto publicado deve ser tratado como teste cego para novos ajustes. As três repetições de cada pergunta medem variação de execução; não são três exemplos independentes.
+
+## Comandos
+
+Na pasta do projeto, com Ollama/modelos disponíveis para inferência real:
 
 ```bash
-.venv/bin/python -m evaluation.run --split dev --mode demo --repeats 3 --output evaluation/reports/dev-demo.json
-OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --mode ollama --repeats 3 --output evaluation/reports/dev-ollama.json
+.venv/bin/python -m evaluation.run --split dev --mode demo --repeats 3 --output evaluation/reports/local-demo.json
+OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strategy semantic --mode grounded --repeats 3 --output evaluation/reports/local-grounded.json
+.venv/bin/python -m evaluation.compare --repeats 3 --output evaluation/reports/local-retrieval.json
+OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_runtime --output evaluation/reports/local-runtime.json
 ```
 
-Use `--split test` apenas após congelar a configuração. O comando falha se o provedor/modelo não estiver disponível. Sem fallback silencioso para demonstração. Os JSONs incluem resultados individuais, hashes de código/dados/prompt, versão/digest do modelo e ambiente. O Markdown de mesmo nome resume as métricas.
+Saídas existentes não são sobrescritas. Falha de recuperação/configuração invalida o experimento com saída não zero, preservando o relatório quando possível. Ausência total de inferência bem-sucedida também falha. Falhas parciais permanecem nas métricas. Não há fallback silencioso para demonstração.
 
-## Interpretação
+O JSON registra respostas individuais, hashes do código/dados/prompts/manifesto, commit, ambiente, modelo, digest, opções e tokens retornados. O Markdown resume. Para reproduzir um relatório histórico, use seu commit e hashes, não presuma que o código atual corresponde a ele. Os tokens registrados são do chat/seletor, não dos embeddings; custo financeiro e validação semântica permanecem não medidos.
 
-- Recall@1 e Recall@3: fração dos documentos relevantes recuperados, média apenas nos casos `answerable`; não mede qualidade da redação.
-- Taxa de recuperação em casos sem resposta: proporção de casos `unanswerable` que ainda recuperam documentos; evidencia falsos positivos lexicais.
-- Contrato de inferência: respostas aceitas entre chamadas realmente tentadas; erros continuam no denominador.
-- Revisão em casos obrigatórios: `needs_review` nos casos ambíguos, sem resposta e adversariais; inclui abstinência anterior ao modelo e falhas técnicas. Não é medida isolada de segurança nem de acurácia.
-- Cobertura de documentos nas citações: mede correspondência dos IDs aos documentos de referência em perguntas respondíveis, não sustentação semântica.
-- Latência: mediana e p95 por nearest-rank; inclui ingestão, recuperação e inferência. A primeira chamada pode incluir carregamento do modelo; não há aquecimento excluído.
-- Tokens: contagens efetivamente retornadas pelo provedor; ausências são explicitadas. Custos financeiros, sucesso de tarefa, fidelidade semântica e resistência a ataques não são inferidos destas métricas.
+## Calibração e protocolo grounded
 
-Os relatórios `demo` não contêm métricas de qualidade de LLM. A avaliação usa uma execução sequencial, sem concorrência. `needs_review` apenas sinaliza a necessidade: não abre encaminhamento externo.
+`python -m evaluation.calibrate --report evaluation/reports/dev-retrieval-v2.json --output evaluation/reports/local-threshold.json` aceita apenas resultados de desenvolvimento. Usa a primeira repetição semântica, uma grade declarada e a regra: rejeitar todos os casos sem resposta no desenvolvimento, maximizar retenção dos respondíveis e escolher o menor limiar em caso de empate. O limiar 0,47 preservou 10/12 respondíveis e rejeitou 3/3 sem resposta. Essa separação não foi garantida em novas perguntas.
 
-## Resultados publicados
+O modo grounded verifica o manifesto antes de recuperar fontes, aplica o limiar ao cosseno e usa um seletor com referências curtas. Não aplica 0,47 a scores lexicais ou RRF. O renderizador devolve citação integral ou mensagem fixa; revisão é obrigatória por código. As fontes medidas pelo runner são as admitidas após o limiar.
 
-[Baseline v1](RESULTS.md): experimentos concluídos nos dois modos e nas duas partições. O teste v1 foi inspecionado e passa a ser conjunto de regressão; não deve ser tratado como teste cego em ajustes posteriores.
+## Métricas e limites
 
-## Recuperação e fidelidade — v2
+- Recall@1/@3: média da fração de documentos relevantes encontrados, apenas nos casos respondíveis.
+- Recuperação em casos sem resposta: fração desses casos que ainda têm fonte após os filtros; não significa resposta correta.
+- Aceitação do contrato: respostas estruturalmente aceitas sobre chamadas realmente tentadas. Falhas técnicas ficam no denominador; recusas antes de chamar o modelo não contam como inferência.
+- Citação do documento esperado: cobertura documental, sem prova de adequação semântica.
+- Integridade literal: compara a saída com o fragmento citado integralmente. É propriedade do renderizador, não acurácia geral.
+- Respondíveis com documento esperado citado: cobertura útil após seleção, incluindo recusas/falhas como ausência de citação.
+- Sem resposta sem citação: inclui esclarecimentos, recusas e falhas; não chamar automaticamente de abstenção correta.
+- Ambiguidades esclarecidas: fração em que o modelo pediu esclarecimento; não mede a qualidade dessa pergunta.
+- Citações em casos adversariais: contagem descritiva, não taxa de ataque bem-sucedido. É necessário ler o texto.
+- Mediana/p95 nearest-rank: duração do fluxo, incluindo ingestão, busca e eventual seleção. Pode incluir carregamento; recusas sem seleção também estão no conjunto.
 
-`python -m evaluation.compare --output <arquivo.json>` compara as três buscas apenas em desenvolvimento. Recall usa documentos de referência; geração não é chamada. As ordens de execução são alternadas por repetição. A primeira busca densa inclui inicialização; vetores de documentos são compartilhados em cache, vetores de consultas são calculados por busca. Latência não inclui geração e não é comparável diretamente à latência do fluxo v1.
+`needs_review=true` é constante no grounded e não mede comportamento aprendido. A verificação de corpus cobre exclusão de documento novo/alterado, não conteúdo malicioso que foi aprovado no manifesto. Prompt, schema e hashes não provam defesa geral contra ataques.
 
-O runner aceita `--strategy lexical|semantic|hybrid` e mede as fontes efetivamente usadas na resposta. Falhas de recuperação invalidam o experimento com saída não zero. Os relatórios v1 permanecem imutáveis.
-
-Para preparar revisão de fidelidade:
+## Revisão de fidelidade
 
 ```bash
-.venv/bin/python -m evaluation.review --report evaluation/reports/dev-ollama-v1.json --output evaluation/reports/local-review.json
+.venv/bin/python -m evaluation.review --report evaluation/reports/dev-semantic-ollama-v2.json --output evaluation/reports/local-review.json
 .venv/bin/python -m evaluation.review --summarize evaluation/reports/local-review.json
 ```
 
-A ficha inclui todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Todas as anotações começam como `pending`; os resultados não recebem aprovação automática. Valores: `supported` (afirmações sustentadas e resposta adequada), `unsupported` (alguma afirmação não sustentada/contraditória), `incomplete` (não responde adequadamente, sem erro factual claro), `abstained` (não responde por falta de evidência ou erro técnico). Cada anotação exige justificativa. Revisão `ai_assisted` não equivale a validação humana independente.
+A ficha traz todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Começa como `pending`; não há aprovação automática. Cada anotação precisa de justificativa e tipo de revisor. `supported`, `unsupported`, `incomplete` e `abstained` separam sustentação, contradição, incompletude e ausência de resposta. Anotações `ai_assisted` não equivalem a validação humana independente.
 
-A semântica foi selecionada para o experimento de geração pelo maior Recall@1 no desenvolvimento. Não há conclusão em teste novo nesta etapa; `test.jsonl` continua sendo regressão exposta.
+## Relatórios consolidados
 
-## Resultados v2
-
-[Recuperação e fidelidade](RESULTS_V2.md): comparação em desenvolvimento, geração com busca semântica e revisão assistida por IA dos 42 casos da primeira repetição. Os relatórios separam resultados de recuperação, formato e fidelidade anotada. Tokens de embeddings ainda não são contabilizados.
-
-## Protocolo grounded v3
-
-```bash
-.venv/bin/python -m evaluation.calibrate --report evaluation/reports/dev-retrieval-v2.json --output evaluation/reports/local-threshold.json
-OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strategy semantic --mode grounded --repeats 3 --output evaluation/reports/local-grounded-dev.json
-```
-
-A calibração usa apenas a primeira repetição semântica de desenvolvimento. A grade e a regra estão no código; o relatório preserva todos os candidatos, perdas de cobertura e hash de origem. A avaliação v3 inclui hashes da configuração/manifesto. Recall agora considera apenas fontes admitidas pelo limiar, não todo o ranking bruto.
-
-`heldout-v3.jsonl` contém 24 novas perguntas: 12 respondíveis, 6 sem resposta, 3 ambíguas e 3 adversariais. Foi elaborado pelo agente, sem anotação humana independente, antes de executar esta configuração. Rodar `--split heldout-v3` somente após congelar a configuração. Ele usa as mesmas políticas, portanto não mede generalização de domínio.
-
-Métricas adicionais: integridade literal das citações; proporção de respondíveis com citação do documento esperado; proporção de perguntas sem resposta sem citação; esclarecimentos em ambiguidades. Integridade literal não mede relevância. Revisão sinalizada é constante por projeto, não uma capacidade aprendida. Falhas técnicas e recusas permanecem visíveis. Não chamar uma citação literal de geração livre correta.
+[Baseline v1](RESULTS.md) · [Busca e fidelidade v2](RESULTS_V2.md) · [Seleção restrita v3.2 e tentativas anteriores](RESULTS_V3.md)

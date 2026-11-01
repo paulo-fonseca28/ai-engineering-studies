@@ -1,15 +1,30 @@
-# Arquitetura
+# Arquitetura atual
 
-`POST /tickets` → validação → ingestão/versionamento → recuperação lexical → demonstração ou Ollama → validação de contrato/IDs citados → resposta com fontes e rastro.
+`POST /tickets` valida a pergunta e chama o mesmo núcleo utilizado na avaliação. O modo padrão demo usa busca lexical; ollama permite geração livre de pesquisa; grounded exige busca semântica e seleção restrita.
 
-O baseline pontua frequência de termos e raridade documental, normalizando pelo tamanho do fragmento. Não é BM25. Índice reconstruído em memória por chamada. Fragmentos têm até 900 caracteres, com arquivo, SHA-256 e posição. Conteúdo após um título é preservado mesmo sem linha em branco.
+## Fluxo grounded
 
-`supportops/core.py` contém ingestão, recuperação e fluxo. `supportops/llm.py` isola o provedor e carrega `supportops/prompts/answer-v1.txt`. A saída é limitada por JSON Schema e validada novamente em Python. Não há ferramentas externas; o modelo apenas redige. Validação de formato não comprova fidelidade semântica.
+```mermaid
+flowchart LR
+    A[Pergunta validada] --> B[Documentos com hash aprovado]
+    B --> C[Busca semântica]
+    C --> D[Limiar de similaridade]
+    D --> E[Seleção de referência curta]
+    E --> F[Citação literal ou mensagem fixa]
+    F --> G[Resposta com fontes e revisão obrigatória]
+```
 
-`inference_status` torna explícitos demonstração, ausência de fontes, inferência concluída e erro. Rastros não são persistidos. O runner em `evaluation/run.py` arquiva respostas, métricas, hashes e identificação do provedor. API e avaliação usam o mesmo fluxo.
+Falta de fontes, exclusão por limiar e falhas de provedor/configuração devolvem recusa com estado explícito. O modelo escolhe entre referências temporárias como quote_1, clarify e abstain. Python converte a referência no ID original e renderiza o texto completo aprovado. O modelo não pode fornecer o texto exibido neste modo.
 
-## Recuperação v2
+## Componentes
 
-`supportops/retrieval.py` oferece estratégias lexical, semântica e híbrida. A API seleciona por `SUPPORTOPS_RETRIEVAL`; o runner por `--strategy`. Semântica consulta `/api/embed`; híbrida combina rankings lexical e semântico por RRF. Vetores de documentos ficam em cache na memória; documentos continuam versionados e lidos em cada solicitação. Digest do modelo e estratégia são incluídos no rastro. Não há pgvector nesta etapa.
+- `core.py`: ingestão, baseline lexical, orquestração e rastreamento.
+- `retrieval.py`: busca semântica e híbrida RRF, validação e cache em memória de vetores de documentos.
+- `llm.py`: geração livre com `answer-v1.txt`; falhas semânticas conhecidas permanecem documentadas.
+- `grounding.py`: manifesto, limiar, seletor com `select-v3.txt`, mapeamento de referências e renderização literal.
+- `data/grounding-v3.json`: versões aprovadas das políticas e modelo de embeddings calibrado.
+- `evaluation/run.py`: execução e métricas; `calibrate.py`: seleção do limiar somente no desenvolvimento; `verify_runtime.py`: checks reais por HTTP e integridade de corpus.
 
-`evaluation/compare.py` mede recuperação em desenvolvimento; `evaluation/review.py` prepara uma ficha para julgar afirmações, registrando origem e tipo de revisor.
+Fragmentos de até 900 caracteres referenciam arquivo, SHA-256 e posição. A recuperação é recalculada em memória; o cache de documentos usa conteúdo, digest e endpoint. Não há PostgreSQL/pgvector nesta etapa. Rastros de API são devolvidos na resposta, sem persistência; os experimentos arquivam rastros em JSON.
+
+Não há ferramentas de alteração nem consulta de pedidos. Revisão obrigatória é um campo de saída, não encaminhamento executado. Citação literal não prova que a política escolhida responda à pergunta.
