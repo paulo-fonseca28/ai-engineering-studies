@@ -81,10 +81,11 @@ class GroundingTests(unittest.TestCase):
 
     @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
     def test_selection_provider_contract(self):
-        payload = {"message": {"content": json.dumps({"choice": self.source["id"]})}, "eval_count": 20}
+        payload = {"message": {"content": json.dumps({"choice": "quote_1"})}, "eval_count": 20}
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
             result, usage = select_policy("reembolso", [self.source])
         self.assertEqual(result["answer_kind"], "policy_quote")
+        self.assertEqual(result["citations"], [self.source["id"]])
         self.assertEqual(usage["output_tokens"], 20)
 
     @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
@@ -119,7 +120,7 @@ class SelectionChoiceTests(unittest.TestCase):
     def test_clarification_does_not_require_a_source_id(self):
         payload = {"message": {"content": '{"choice":"clarify"}'}}
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
-            result, _ = select_policy("Preciso de ajuda", [{"id": "a", "text": "Política"}])
+            result, _ = select_policy("Preciso de ajuda", [{"id": "a", "title": "Política", "text": "Política"}])
         self.assertEqual(result["answer_kind"], "clarification")
         self.assertEqual(result["citations"], [])
 
@@ -129,4 +130,27 @@ class SelectionChoiceTests(unittest.TestCase):
             payload = {"message": {"content": json.dumps(output)}}
             with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
                 with self.assertRaises(InferenceError):
-                    select_policy("reembolso", [{"id": "a", "text": "Política"}])
+                    select_policy("reembolso", [{"id": "a", "title": "Política", "text": "Política"}])
+
+
+class ReferenceMappingTests(unittest.TestCase):
+    @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
+    def test_second_reference_maps_to_original_id_and_passage(self):
+        sources = [{"id": "refund:hash:1:0", "title": "Refund", "text": "Primeira política."},
+                   {"id": "delivery:hash:1:0", "title": "Delivery", "text": "Segunda política."}]
+        payload = {"message": {"content": '{"choice":"quote_2"}'}}
+        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())) as provider:
+            result, _ = select_policy("pergunta", sources)
+        self.assertEqual(result["citations"], [sources[1]["id"]])
+        self.assertEqual(result["answer"], QUOTE_PREFIX + sources[1]["text"])
+        sent = json.loads(provider.call_args.args[0].data)
+        candidates = json.loads(sent["messages"][1]["content"])["candidates"]
+        self.assertEqual([c["reference"] for c in candidates], ["quote_1", "quote_2"])
+        self.assertNotIn("hash", sent["messages"][1]["content"])
+
+    @patch.dict("os.environ", {"OLLAMA_MODEL": "test-model"})
+    def test_raw_id_cannot_bypass_reference_contract(self):
+        payload = {"message": {"content": '{"choice":"real-id"}'}}
+        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
+            with self.assertRaises(InferenceError):
+                select_policy("pergunta", [{"id": "real-id", "title": "Política", "text": "Texto."}])

@@ -7,7 +7,7 @@ from .llm import InferenceError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "data/grounding-v3.json"
-PROMPT_PATH = Path(__file__).parent / "prompts/select-v2.txt"
+PROMPT_PATH = Path(__file__).parent / "prompts/select-v3.txt"
 OPTIONS = {"temperature": 0, "seed": 42, "num_predict": 128, "num_ctx": 4096}
 QUOTE_PREFIX = "Política de demonstração — trecho literal:\n"
 CLARIFICATION = "Pode detalhar o problema e o que deseja saber sobre o pedido? É necessária revisão humana."
@@ -61,12 +61,14 @@ def select_policy(question, sources):
     model = os.environ.get("OLLAMA_MODEL", "").strip()
     if not model:
         raise InferenceError("missing_model")
+    references = {f"quote_{i}": source["id"] for i, source in enumerate(sources, 1)}
+    candidates = [{"reference": f"quote_{i}", "title": source["title"], "text": source["text"]} for i, source in enumerate(sources, 1)]
     schema = {"type": "object", "additionalProperties": False,
-              "properties": {"choice": {"type": "string", "enum": ["clarify", "abstain"] + [s["id"] for s in sources]}},
+              "properties": {"choice": {"type": "string", "enum": list(references) + ["clarify", "abstain"]}},
               "required": ["choice"]}
     payload = {"model": model, "stream": False, "think": False, "format": schema, "options": OPTIONS,
                "messages": [{"role": "system", "content": PROMPT_PATH.read_text(encoding="utf-8")},
-                            {"role": "user", "content": json.dumps({"question": question, "sources": sources}, ensure_ascii=False)}]}
+                            {"role": "user", "content": json.dumps({"question": question, "candidates": candidates}, ensure_ascii=False)}]}
     request = urllib.request.Request(os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat"),
                                      data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(request, timeout=120) as response:
@@ -85,7 +87,9 @@ def select_policy(question, sources):
         if choice in {"clarify", "abstain"}:
             selection = {"decision": choice, "source_id": ""}
         else:
-            selection = {"decision": "quote", "source_id": choice}
+            if choice not in references:
+                raise InferenceError("unknown_selected_reference")
+            selection = {"decision": "quote", "source_id": references[choice]}
         response = render(selection, sources)
     except InferenceError as error:
         error.usage = usage

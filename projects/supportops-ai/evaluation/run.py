@@ -175,7 +175,7 @@ def main():
             print(f"{repeat}/{args.repeats} {case['id']} {result['inference_status']}", flush=True)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True)
-    report = {"protocol": "grounding-v3.1", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
+    report = {"protocol": "grounding-v3.2", "strategy": args.strategy, "created_at": datetime.now(timezone.utc).isoformat(),
               "split": args.split, "mode": args.mode, "cases": len(cases), "repeats": args.repeats,
               "environment": {"python": platform.python_version(), "os": platform.system(), "kernel": platform.release(), "architecture": platform.machine()},
               "git_revision": revision.stdout.strip(), "working_tree_dirty": bool(dirty.stdout.strip()),

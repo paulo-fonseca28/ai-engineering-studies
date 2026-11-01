@@ -19,3 +19,9 @@ No desenvolvimento v3, 21/48 chamadas foram rejeitadas porque o modelo combinou 
 Substituir o contrato de rede por um único campo `choice`, cujo enum contém IDs permitidos, `clarify` e `abstain`. O renderizador converte a escolha em decisão interna. Não há dois campos que possam divergir. Limiar, corpus e opções do modelo permanecem iguais. O prompt `select-v1.txt` fica preservado e `select-v2.txt` descreve a nova representação.
 
 Como heldout-v3 já executou, passa a ser regressão. Criar heldout-v4 antes de executar a correção; mesmas proporções e limitações de autoria/domínio. Não selecionar nova configuração usando seus resultados.
+
+## Referências curtas — v3.2
+
+A v3.1 passou pelo contrato mas não produziu citações úteis no desenvolvimento. O diagnóstico em cinco casos de desenvolvimento com referências curtas produziu citações nas três perguntas respondíveis, mas escolheu política numa pergunta ambígua. Adotar o payload e o prompt exatos desse diagnóstico como candidato v3.2, sem atribuir a diferença apenas ao comprimento dos IDs: prompt e payload também mudaram.
+
+O modelo recebe reference, title e text. A aplicação converte quote_N no ID original, valida que a referência existe e continua renderizando o texto integral aprovado. IDs/hash públicos não mudam. O prompt select-v3.txt é versionado; os anteriores permanecem preservados. Limiar, corpus e opções do modelo não mudam.
