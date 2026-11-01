@@ -25,3 +25,7 @@ Como heldout-v3 já executou, passa a ser regressão. Criar heldout-v4 antes de 
 A v3.1 passou pelo contrato mas não produziu citações úteis no desenvolvimento. O diagnóstico em cinco casos de desenvolvimento com referências curtas produziu citações nas três perguntas respondíveis, mas escolheu política numa pergunta ambígua. Adotar o payload e o prompt exatos desse diagnóstico como candidato v3.2, sem atribuir a diferença apenas ao comprimento dos IDs: prompt e payload também mudaram.
 
 O modelo recebe reference, title e text. A aplicação converte quote_N no ID original, valida que a referência existe e continua renderizando o texto integral aprovado. IDs/hash públicos não mudam. O prompt select-v3.txt é versionado; os anteriores permanecem preservados. Limiar, corpus e opções do modelo não mudam.
+
+## Congelamento para validação v3.2
+
+O desenvolvimento v3.2 produziu citações do documento esperado em 10/12 perguntas respondíveis, sem erro de contrato; ambiguidades ainda receberam políticas. Não ajustar o limiar nem o seletor nesta etapa. Criar heldout-v5 com 24 perguntas antes da execução final (12 respondíveis, 6 sem resposta, 3 ambíguas e 3 adversariais). Todas as partições anteriores estão expostas. A nova partição continua sintética e de autoria do agente, não validação humana independente. Seus erros devem ser publicados, não usados para outra rodada de ajuste nesta entrega.

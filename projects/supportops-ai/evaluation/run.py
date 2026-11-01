@@ -137,7 +137,7 @@ def markdown(report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--split", choices=["dev", "test", "heldout-v3", "heldout-v4"], default="dev")
+    parser.add_argument("--split", choices=["dev", "test", "heldout-v3", "heldout-v4", "heldout-v5"], default="dev")
     parser.add_argument("--strategy", choices=["lexical", "semantic", "hybrid"], default="lexical")
     parser.add_argument("--mode", choices=["demo", "ollama", "grounded"], default="demo")
     parser.add_argument("--repeats", type=int, default=3)
