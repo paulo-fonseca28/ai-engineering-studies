@@ -14,3 +14,5 @@
 - Pedidos são cinco registros sintéticos estáticos, sem autenticação ou verificação de titularidade. Consulta somente leitura e roteamento explícito; o fluxo de tickets não decide elegibilidade nem executa alterações. A simulação separada aplica apenas a transição received → cancelled com confirmação. A composição grounded foi testada com mocks nesta entrega, sem nova avaliação real do modelo.
 
 - A simulação tem persistência SQLite local, sem identidade do operador, migrações ou integração com o estado consultado por tickets. confirmed=true não comprova revisão humana. Idempotência cobre apenas uma base local, sem efeitos externos. Consulte [limites e contrato](simulation.md).
+
+- A interface local usa apenas a simulação. O contexto de repetição fica em memória da página e é perdido ao recarregar. Descartar uma proposta na tela não a revoga no servidor. Ainda não houve teste visual em navegador.

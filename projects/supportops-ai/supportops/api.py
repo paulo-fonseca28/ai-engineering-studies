@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from fastapi.responses import FileResponse
 from typing import Annotated, Literal
 from fastapi import FastAPI, HTTPException, Path as ApiPath, Response
 from pydantic import BaseModel, ValidationError
@@ -7,7 +9,7 @@ from .actions import ActionError, ActionStore, ConfirmationInput, ProposalInput
 from .orders import ORDER_ID_PATTERN, OrderLookupResult, lookup_order
 from .service import PolicySection, RequestType, Ticket, respond
 
-app = FastAPI(title="SupportOps AI", version="0.6.0")
+app = FastAPI(title="SupportOps AI", version="0.7.0")
 STRATEGY = os.environ.get("SUPPORTOPS_RETRIEVAL", "lexical")
 if STRATEGY not in {"lexical", "semantic", "hybrid"}:
     raise RuntimeError("SUPPORTOPS_RETRIEVAL inválido")
@@ -89,3 +91,13 @@ def propose_cancellation(request: ProposalInput):
 @app.post('/simulation/cancellations/confirmations')
 def confirm_cancellation(request: ConfirmationInput):
     return simulation_call('confirm', request)
+
+
+@app.get('/', include_in_schema=False)
+def review_page():
+    return FileResponse(Path(__file__).with_name('ui.html'), media_type='text/html')
+
+
+@app.get('/ui.js', include_in_schema=False)
+def review_script():
+    return FileResponse(Path(__file__).with_name('ui.js'), media_type='application/javascript')

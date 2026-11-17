@@ -4,7 +4,7 @@ API 0.6. Somente dados fictícios, sem modelos ou serviços externos envolvidos.
 
 ## Executar
 
-Inicie a API conforme o README. Abra /docs ou use:
+Inicie a API conforme o README. Abra http://127.0.0.1:8000 para usar a interface local. Consulte o ID, prepare uma proposta, revise os estados e marque a confirmação antes de executar. Também é possível usar /docs ou os comandos abaixo:
 
 ```bash
 curl -s http://127.0.0.1:8000/simulation/orders/DEMO-1001
@@ -32,10 +32,12 @@ Repita exatamente a confirmação para recuperar o mesmo resultado. A chave deve
 
 O banco é criado e populado uma única vez a partir da fixture validada, no primeiro acesso a /simulation (inclusive GET). Caminho padrão: var/actions.sqlite3, relativo à pasta do projeto. SUPPORTOPS_ACTION_DB permite um caminho alternativo. Reiniciar o processo preserva os dados; editar a fixture não repopula bancos existentes. Para outra demonstração, use um caminho de banco novo. Arquivos locais de banco não são versionados.
 
-GET /simulation/orders/{id} lê o estado mutável da simulação, com versão. GET /orders/{id} e POST /tickets continuam consultando o snapshot estático de orders.json. Esses universos são deliberadamente separados: uma simulação cancelada não altera o snapshot. A simulação não é invocada pelo modelo nem pelo fluxo de tickets. Não há interface de revisão integrada ainda.
+GET /simulation/orders/{id} lê o estado mutável da simulação, com versão. GET /orders/{id} e POST /tickets continuam consultando o snapshot estático de orders.json. Esses universos são deliberadamente separados: uma simulação cancelada não altera o snapshot. A simulação não é invocada pelo modelo nem pelo fluxo de tickets. A interface na raiz da API usa exclusivamente /simulation. Em falhas de rede, uma nova tentativa na mesma tela preserva proposta e chave. Recarregar a página perde esse contexto; consulte o estado antes de iniciar outra operação. Descartar na tela não revoga a proposta no servidor: ela expira após cinco minutos.
 
 SQLite serializa escritores; este contrato não promete coordenação entre bancos distintos nem execução exatamente uma vez em serviços externos. Não há autenticação, autorização, retenção/limpeza de propostas, migrações, auditoria de identidade ou backup gerenciado. Propostas expiradas permanecem armazenadas. A regra é fixa no código, não inferida da política pelo LLM.
 
 ## Validação
 
 91 testes passaram em 17/11/2026 (10 novos). Incluem oito confirmações concorrentes com uma só execução, persistência ao reabrir o banco, isolamento da fixture, expiração, proposta desatualizada, conflito de chave, rollback após falha forçada e contratos ASGI. Testes usam bancos temporários. Não houve nova avaliação de modelos; as limitações de relevância anteriores permanecem.
+
+Interface v0.7: um teste JavaScript do fluxo com DOM/fetch simulados passou, além dos 91 testes Python e checks HTTP reais da página e script. A renderização visual em navegador ainda não foi validada.

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SupportOps — revisão de pedidos</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#172d39;background:#f2f5f6}body{max-width:760px;margin:48px auto;padding:0 20px}header{margin-bottom:32px}h1{font-size:2rem;margin:8px 0}section{background:white;border:1px solid #cedade;border-radius:12px;padding:24px;margin:20px 0}label{display:block;margin:12px 0}input[type=text]{padding:12px;border:1px solid #81969e;border-radius:6px;font:inherit;max-width:90%}button{font:inherit;padding:12px 18px;border:0;border-radius:6px;background:#145d64;color:white;cursor:pointer;margin:8px 8px 0 0}button:disabled{opacity:.5;cursor:default}#confirm{background:#9c3029}small{color:#465e68}#notice{white-space:pre-wrap;min-height:32px}a{color:#145d64}:focus-visible{outline:3px solid #d58b00;outline-offset:3px}[hidden]{display:none!important}
+</style>
+<header><small>SUPPORTOPS AI · LABORATÓRIO LOCAL</small><h1>Revisão de pedidos</h1><p>Consulte e cancele pedidos fictícios. Nenhum pagamento, reembolso ou serviço externo é acionado.</p></header>
+<section><h2>1. Consultar pedido</h2><form id="lookup"><label for="order">Identificador do pedido</label><input id="order" type="text" value="DEMO-1001" pattern="DEMO-[0-9]{4}" maxlength="9" required><button id="search">Consultar</button></form><p><small>Exemplos: DEMO-1001 a DEMO-1005. Esta tela usa o estado persistente da simulação.</small></p><p id="status"></p><button id="propose" hidden>Preparar cancelamento</button></section>
+<section id="review" hidden><h2>2. Revisar proposta</h2><p id="summary"></p><p id="expires"></p><label><input id="consent" type="checkbox"> Revisei o pedido e confirmo seu cancelamento nesta simulação.</label><button id="confirm" disabled>Confirmar cancelamento</button><button id="dismiss">Descartar proposta na tela</button></section>
+<p id="notice" role="status" aria-live="polite"></p>
+<footer><small>As consultas em /orders e /tickets usam um snapshot estático separado. Esta tela não avalia políticas com IA. <a href="/docs">Documentação da API</a></small></footer>
+<script src="/ui.js" defer></script>
+</html>

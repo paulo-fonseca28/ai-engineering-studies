@@ -19,7 +19,7 @@ python3 -m venv .venv
 .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
 ```
 
-Abra http://127.0.0.1:8000/docs para enviar perguntas. O padrão é demonstração com busca lexical, sem credenciais ou serviço de modelos.
+Abra http://127.0.0.1:8000 para consultar pedidos simulados, revisar propostas e confirmar cancelamentos. Use http://127.0.0.1:8000/docs para enviar perguntas sobre políticas. O padrão é demonstração com busca lexical, sem credenciais ou serviço de modelos.
 
 ```bash
 curl -s http://127.0.0.1:8000/tickets -H 'Content-Type: application/json' -d '{"question":"Qual a política de reembolso?"}'
@@ -76,6 +76,10 @@ Dependências diretas em `requirements.in` e versões transitivas fixadas em `re
 
 ## Próximas entregas
 
-Aprimorar esclarecimento de ambiguidades e tratamento de perguntas sem evidência, mantendo resultados anteriores. A consulta somente leitura de pedidos sintéticos está implementada. Cancelamento em simulação separada já tem confirmação/idempotência e SQLite. Próximas etapas: interface de revisão, autenticação, integração n8n e integração explícita das consultas com o estado da simulação. DemandLab permanece um projeto futuro separado.
+Aprimorar esclarecimento de ambiguidades e tratamento de perguntas sem evidência, mantendo resultados anteriores. A consulta somente leitura de pedidos sintéticos está implementada. Cancelamento em simulação separada já tem confirmação/idempotência e SQLite. A interface local de revisão está disponível na raiz da API. Próximas etapas: integração explícita das consultas com o estado da simulação, autenticação e integração n8n. DemandLab permanece um projeto futuro separado.
 
 [Arquitetura](docs/architecture.md) · [Limitações](docs/limitations.md) · [Decisão do modo grounded](docs/decisions/0004-grounded-responses.md) · [Checkpoint](../../CONTINUITY.md)
+
+## Teste da interface
+
+Com Node.js disponível, execute `node --test tests/ui/review.test.cjs` na pasta do projeto. O teste verifica consentimento obrigatório, repetição após falha de rede com a mesma chave e atualização do estado na tela. Foram aprovados 91 testes Python, um teste JavaScript e a entrega real de HTML/JS via HTTP. Não houve validação visual automatizada em navegador nesta entrega.

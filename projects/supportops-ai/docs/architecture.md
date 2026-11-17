@@ -32,3 +32,7 @@ Há consulta de pedidos sintéticos via orders.py, com validação integral do a
 ## Estado da simulação
 
 `actions.py` mantém orders, proposals e executions em uma única transação SQLite por operação. Versão do pedido evita confirmar uma proposta desatualizada; chave de idempotência recupera o resultado original. As consultas de tickets continuam no snapshot estático. [Contrato, exemplos e limites](simulation.md).
+
+## Interface local
+
+GET / entrega ui.html e GET /ui.js entrega o script sem dependências externas. O navegador consulta exclusivamente /simulation, exige consentimento e mantém a mesma chave ao repetir uma confirmação após erro de rede. Dados retornados são inseridos via textContent. Não há chamadas de modelo na tela.

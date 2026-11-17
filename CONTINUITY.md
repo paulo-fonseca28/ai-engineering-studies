@@ -1,12 +1,18 @@
 # Ponto de retomada — 17/11/2026
 
-## Entrega atual — cancelamento sintético com confirmação
+## Entrega atual — interface local de revisão
+
+API 0.7: GET / serve ui.html; /ui.js contém fluxo sem dependências. Consulta somente /simulation, prepara proposta, exige consentimento, confirma e mostra estado final. Falha de rede preserva chave/proposta para nova tentativa na mesma página. Recarregar perde contexto; descartar na tela não revoga a proposta do servidor. Nenhum modelo decide a ação.
+
+Validação: 91 testes Python + 1 teste Node (node --test tests/ui/review.test.cjs), além de HTML/JS por HTTP real em servidor temporário encerrado. Sem inspeção visual em navegador. Próxima etapa: integrar explicitamente consultas ao estado simulado e preparar uma demonstração reproduzível; autenticação, CI ativo e n8n pendentes. DemandLab ainda não iniciado. Evitar ampliar indefinidamente o SupportOps antes de começar o segundo projeto.
+
+## Entrega anterior — cancelamento sintético com confirmação
 
 API 0.6: actions.py implementa SQLite em var/actions.sqlite3 (ou SUPPORTOPS_ACTION_DB), inicializado da fixture uma vez. /simulation/orders/{id} lê estado; /simulation/cancellations/proposals prepara cancelamento received → cancelled; /simulation/cancellations/confirmations exige confirmed=true, proposal_id e idempotency_key. Proposta expira em 300s; versão evita confirmação obsoleta; BEGIN IMMEDIATE torna mudança, consumo e resultado atômicos. Repetições recuperam o resultado original. Não há modelo executando ferramentas.
 
 91 testes passaram em 17/11/2026. Dez novos cobrem concorrência, persistência, rollback, contratos ASGI e erros. Sem nova avaliação de LLM. Documentação em docs/simulation.md. Bancos ignorados pelo Git; testes usam temporários. /orders e /tickets continuam no snapshot estático, explicitamente separado de /simulation. Não inferir que o cancelamento altera o snapshot.
 
-Próxima etapa: interface local de revisão/confirmacão e decisão explícita sobre integrar consultas ao estado simulado; autenticação e migrações seguem pendentes. Evitar misturar fonte estática e mutável silenciosamente. DemandLab ainda planejado. Revisar status/log ao retomar; relatórios e limitações do seletor preservados.
+Plano anterior, interface concluída acima: interface local de revisão/confirmação e decisão explícita sobre integrar consultas ao estado simulado; autenticação e migrações seguem pendentes. Evitar misturar fonte estática e mutável silenciosamente. DemandLab ainda planejado. Revisar status/log ao retomar; relatórios e limitações do seletor preservados.
 
 ## Entrega anterior de pedidos — 17/11/2026
 
@@ -68,4 +74,4 @@ Use um nome de saída ainda inexistente. Ollama 0.40.13 foi iniciado nesta sess�
 
 Sandbox somente leitura: escrita, rede e testes com temporários exigem escalonamento. GitHub autenticado, remote HTTPS. Para push: `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin main`. Não imprimir credenciais. A credencial não tem permissão workflow; CI segue como template em docs/ci-tests.yml, não ativo. Não presumir que um push terminou: verificar a resposta e estado Git.
 
-Manter documentação pública focada nos estudos/implementação, sem informações pessoais de candidatura. Atualizar README, arquitetura, limitações e este checkpoint ao terminar a próxima entrega. O projeto ainda não tem autenticação, dados reais, ferramentas de alteração de pedidos reais, n8n, interface própria ou deploy público da aplicação.
+Manter documentação pública focada nos estudos/implementação, sem informações pessoais de candidatura. Atualizar README, arquitetura, limitações e este checkpoint ao terminar a próxima entrega. O projeto ainda não tem autenticação, dados reais, ferramentas de alteração de pedidos reais, n8n ou deploy público da aplicação.
