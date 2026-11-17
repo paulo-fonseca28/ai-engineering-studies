@@ -25,3 +25,5 @@ A resposta combinada separa o estado do pedido da orientação geral, preservada
 `order_lookup.synthetic=true` identifica a natureza fictícia dos registros em todos os modos. O campo legado simulated indica apenas mode=demo. needs_review permanece verdadeiro. O roteamento é determinístico, controlado por request_type; não há agente escolhendo ferramentas, confirmação, alteração ou banco de pedidos.
 
 Validação em 17/11/2026: 81 testes unitários e ASGI passaram (57 anteriores e 24 novos). Cobrem os cinco estados, inexistência, corrupção, validação de contratos, isolamento do ID, bloqueio de alterações e serialização HTTP. A composição grounded foi testada com resposta de política simulada; não houve nova avaliação com modelos reais nesta entrega. Os resultados históricos de qualidade do seletor permanecem inalterados.
+
+A API 0.6 também oferece uma [simulação separada de cancelamento](simulation.md). Este contrato de consulta permanece somente leitura sobre o snapshot; não mostra as alterações da simulação.

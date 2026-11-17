@@ -11,4 +11,6 @@
 - API local sem autenticação, persistência de rastros ou controle de concorrência. `/health` não verifica os modelos.
 - Dependências verificadas em Python 3.12. Docker, CI remoto, deploy público da aplicação, pedidos reais, agentes escolhendo ferramentas e n8n permanecem pendentes.
 
-- Pedidos são cinco registros sintéticos estáticos, sem autenticação ou verificação de titularidade. Consulta somente leitura e roteamento explícito; não há decisões de elegibilidade, alterações nem integração externa. A composição grounded foi testada com mocks nesta entrega, sem nova avaliação real do modelo.
+- Pedidos são cinco registros sintéticos estáticos, sem autenticação ou verificação de titularidade. Consulta somente leitura e roteamento explícito; o fluxo de tickets não decide elegibilidade nem executa alterações. A simulação separada aplica apenas a transição received → cancelled com confirmação. A composição grounded foi testada com mocks nesta entrega, sem nova avaliação real do modelo.
+
+- A simulação tem persistência SQLite local, sem identidade do operador, migrações ou integração com o estado consultado por tickets. confirmed=true não comprova revisão humana. Idempotência cobre apenas uma base local, sem efeitos externos. Consulte [limites e contrato](simulation.md).

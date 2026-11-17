@@ -1,11 +1,13 @@
 import os
 from typing import Annotated, Literal
 from fastapi import FastAPI, HTTPException, Path as ApiPath, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from sqlite3 import Error as SQLiteError
+from .actions import ActionError, ActionStore, ConfirmationInput, ProposalInput
 from .orders import ORDER_ID_PATTERN, OrderLookupResult, lookup_order
 from .service import PolicySection, RequestType, Ticket, respond
 
-app = FastAPI(title="SupportOps AI", version="0.5.0")
+app = FastAPI(title="SupportOps AI", version="0.6.0")
 STRATEGY = os.environ.get("SUPPORTOPS_RETRIEVAL", "lexical")
 if STRATEGY not in {"lexical", "semantic", "hybrid"}:
     raise RuntimeError("SUPPORTOPS_RETRIEVAL inválido")
@@ -62,3 +64,28 @@ def get_order(order_id: Annotated[str, ApiPath(min_length=9, max_length=9, patte
     result = lookup_order(order_id)
     response.status_code = {"found": 200, "not_found": 404, "unavailable": 503}[result.outcome]
     return result
+
+
+# Explicit simulation endpoints are never invoked by the LLM or /tickets.
+def simulation_call(method, argument):
+    try:
+        return getattr(ActionStore(), method)(argument)
+    except ActionError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.code) from exc
+    except (SQLiteError, OSError, ValidationError) as exc:
+        raise HTTPException(status_code=503, detail='simulation_store_unavailable') from exc
+
+
+@app.get('/simulation/orders/{order_id}')
+def simulation_order(order_id: Annotated[str, ApiPath(min_length=9, max_length=9, pattern=ORDER_ID_PATTERN)]):
+    return simulation_call('order', order_id)
+
+
+@app.post('/simulation/cancellations/proposals', status_code=201)
+def propose_cancellation(request: ProposalInput):
+    return simulation_call('propose', request)
+
+
+@app.post('/simulation/cancellations/confirmations')
+def confirm_cancellation(request: ConfirmationInput):
+    return simulation_call('confirm', request)

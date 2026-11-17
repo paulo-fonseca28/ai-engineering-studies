@@ -2,3 +2,8 @@
 __pycache__/
 .env
 .pytest_cache/
+var/
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm

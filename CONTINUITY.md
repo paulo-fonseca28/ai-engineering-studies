@@ -1,12 +1,20 @@
 # Ponto de retomada — 17/11/2026
 
-## Entrega de pedidos — 17/11/2026
+## Entrega atual — cancelamento sintético com confirmação
+
+API 0.6: actions.py implementa SQLite em var/actions.sqlite3 (ou SUPPORTOPS_ACTION_DB), inicializado da fixture uma vez. /simulation/orders/{id} lê estado; /simulation/cancellations/proposals prepara cancelamento received → cancelled; /simulation/cancellations/confirmations exige confirmed=true, proposal_id e idempotency_key. Proposta expira em 300s; versão evita confirmação obsoleta; BEGIN IMMEDIATE torna mudança, consumo e resultado atômicos. Repetições recuperam o resultado original. Não há modelo executando ferramentas.
+
+91 testes passaram em 17/11/2026. Dez novos cobrem concorrência, persistência, rollback, contratos ASGI e erros. Sem nova avaliação de LLM. Documentação em docs/simulation.md. Bancos ignorados pelo Git; testes usam temporários. /orders e /tickets continuam no snapshot estático, explicitamente separado de /simulation. Não inferir que o cancelamento altera o snapshot.
+
+Próxima etapa: interface local de revisão/confirmacão e decisão explícita sobre integrar consultas ao estado simulado; autenticação e migrações seguem pendentes. Evitar misturar fonte estática e mutável silenciosamente. DemandLab ainda planejado. Revisar status/log ao retomar; relatórios e limitações do seletor preservados.
+
+## Entrega anterior de pedidos — 17/11/2026
 
 API 0.5: lookup_order somente leitura, fixture com cinco estados, contratos estritos e rastros. GET /orders/{id}; POST /tickets aceita policy (padrão), order_status e order_policy. O último aceita demo/grounded, bloqueia geração livre ollama. ID explícito obrigatório, nenhum ID inferido pelo modelo. Registro ausente/corrompido impede consulta de políticas. Nenhuma alteração implementada.
 
 81 testes passaram: 57 anteriores e 24 novos, incluindo integração ASGI. Contratos em docs/lookup-order.schema.json e exemplos/limites em docs/order-tool.md. Composição grounded validada com mocks, sem novos resultados reais de LLM. Relatórios anteriores preservados. Não há execução longa pendente nesta entrega.
 
-Próxima etapa: desenhar e implementar alteração estritamente sintética com confirmação explícita e idempotência, definindo persistência e transições antes de expor ações. Não apresentar consulta atual como agente autônomo. As falhas anteriores de relevância continuam abertas. DemandLab ainda não implementado. Conferir git status/log; não reutilizar avaliações expostas como teste cego.
+Plano anterior, concluído na simulação acima: desenhar e implementar alteração estritamente sintética com confirmação explícita e idempotência, definindo persistência e transições antes de expor ações. Não apresentar consulta atual como agente autônomo. As falhas anteriores de relevância continuam abertas. DemandLab ainda não implementado. Conferir git status/log; não reutilizar avaliações expostas como teste cego.
 
 ## Estado anterior e evidências preservadas
 
@@ -60,4 +68,4 @@ Use um nome de saída ainda inexistente. Ollama 0.40.13 foi iniciado nesta sess�
 
 Sandbox somente leitura: escrita, rede e testes com temporários exigem escalonamento. GitHub autenticado, remote HTTPS. Para push: `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin main`. Não imprimir credenciais. A credencial não tem permissão workflow; CI segue como template em docs/ci-tests.yml, não ativo. Não presumir que um push terminou: verificar a resposta e estado Git.
 
-Manter documentação pública focada nos estudos/implementação, sem informações pessoais de candidatura. Atualizar README, arquitetura, limitações e este checkpoint ao terminar a próxima entrega. O projeto ainda não tem autenticação, banco persistente, dados reais, ferramentas de alteração de pedidos, n8n, interface própria ou deploy público da aplicação.
+Manter documentação pública focada nos estudos/implementação, sem informações pessoais de candidatura. Atualizar README, arquitetura, limitações e este checkpoint ao terminar a próxima entrega. O projeto ainda não tem autenticação, dados reais, ferramentas de alteração de pedidos reais, n8n, interface própria ou deploy público da aplicação.

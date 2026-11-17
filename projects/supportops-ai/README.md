@@ -4,7 +4,7 @@ Assistente experimental para uma operação **fictícia** de delivery. Consulta 
 
 ## Estado verificado
 
-**81 testes passaram em 17/11/2026**, incluindo 24 novos testes de pedidos e integração ASGI. A validação anterior de políticas também incluiu nove solicitações HTTP, quatro checks de saúde e dois testes reais de exclusão de documentos não aprovados. O modo grounded voltou a produzir citações úteis: documento esperado em 10/12 perguntas respondíveis de desenvolvimento e 12/12 da bateria final de 24 perguntas.
+**91 testes passaram em 17/11/2026**, incluindo consultas de pedidos e cancelamento simulado com confirmação, persistência e idempotência. A validação anterior de políticas também incluiu nove solicitações HTTP, quatro checks de saúde e dois testes reais de exclusão de documentos não aprovados. O modo grounded voltou a produzir citações úteis: documento esperado em 10/12 perguntas respondíveis de desenvolvimento e 12/12 da bateria final de 24 perguntas.
 
 Todas as citações grounded preservaram o texto aprovado. Ainda ocorreram políticas irrelevantes em 2/6 perguntas sem resposta e falta de esclarecimento em 2/3 ambiguidades da bateria final. Os dados são sintéticos e não têm validação humana independente. Veja [resultados completos, tentativas anteriores e limites](evaluation/RESULTS_V3.md).
 
@@ -29,6 +29,10 @@ curl -s http://127.0.0.1:8000/tickets -H 'Content-Type: application/json' -d '{"
 ## Consultar pedidos sintéticos
 
 A API 0.5 oferece `GET /orders/DEMO-1003` e os tipos `order_status` e `order_policy` em `/tickets`. Os registros são estáticos, fictícios e somente leitura. A consulta de estado dispensa modelos; a combinação com políticas aceita demo ou grounded. Veja [exemplos, contratos, códigos HTTP e limites](docs/order-tool.md).
+
+## Simular cancelamento com confirmação
+
+A API 0.6 adiciona propostas de cancelamento e confirmação explícita em `/simulation`, com SQLite e prevenção de execução duplicada. Somente pedidos fictícios recebidos são elegíveis. [Executar a simulação e entender a separação do snapshot](docs/simulation.md).
 
 ## Executar com seleção de políticas local
 
@@ -72,6 +76,6 @@ Dependências diretas em `requirements.in` e versões transitivas fixadas em `re
 
 ## Próximas entregas
 
-Aprimorar esclarecimento de ambiguidades e tratamento de perguntas sem evidência, mantendo resultados anteriores. A consulta somente leitura de pedidos sintéticos está implementada. Próximas etapas: ferramentas de alteração com confirmação/idempotência, persistência, interface e integração n8n. DemandLab permanece um projeto futuro separado.
+Aprimorar esclarecimento de ambiguidades e tratamento de perguntas sem evidência, mantendo resultados anteriores. A consulta somente leitura de pedidos sintéticos está implementada. Cancelamento em simulação separada já tem confirmação/idempotência e SQLite. Próximas etapas: interface de revisão, autenticação, integração n8n e integração explícita das consultas com o estado da simulação. DemandLab permanece um projeto futuro separado.
 
 [Arquitetura](docs/architecture.md) · [Limitações](docs/limitations.md) · [Decisão do modo grounded](docs/decisions/0004-grounded-responses.md) · [Checkpoint](../../CONTINUITY.md)
