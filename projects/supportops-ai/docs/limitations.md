@@ -9,4 +9,6 @@
 - Todos os conjuntos publicados já estão expostos. São úteis como regressão, não como teste cego para ajustes posteriores. Repetições não aumentam o número de perguntas independentes.
 - Temperatura zero/seed fixa não garantem determinismo entre versões/hardware. Latências incluem recusas e aquecimento; não representam produção. Tokens de embeddings e custo financeiro não são contabilizados.
 - API local sem autenticação, persistência de rastros ou controle de concorrência. `/health` não verifica os modelos.
-- Dependências verificadas em Python 3.12. Docker, CI remoto, deploy público da aplicação, pedidos, agentes com ferramentas e n8n permanecem pendentes.
+- Dependências verificadas em Python 3.12. Docker, CI remoto, deploy público da aplicação, pedidos reais, agentes escolhendo ferramentas e n8n permanecem pendentes.
+
+- Pedidos são cinco registros sintéticos estáticos, sem autenticação ou verificação de titularidade. Consulta somente leitura e roteamento explícito; não há decisões de elegibilidade, alterações nem integração externa. A composição grounded foi testada com mocks nesta entrega, sem nova avaliação real do modelo.

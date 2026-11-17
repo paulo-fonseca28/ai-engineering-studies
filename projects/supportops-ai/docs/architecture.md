@@ -1,6 +1,6 @@
 # Arquitetura atual
 
-`POST /tickets` valida a pergunta e chama o mesmo núcleo utilizado na avaliação. O modo padrão demo usa busca lexical; ollama permite geração livre de pesquisa; grounded exige busca semântica e seleção restrita.
+`POST /tickets` valida a pergunta e o tipo explícito de solicitação. service.py encaminha consultas de políticas ao mesmo núcleo utilizado na avaliação e consultas de pedidos à ferramenta somente leitura. O modo padrão demo usa busca lexical; ollama permite geração livre de pesquisa; grounded exige busca semântica e seleção restrita.
 
 ## Fluxo grounded
 
@@ -27,4 +27,4 @@ Falta de fontes, exclusão por limiar e falhas de provedor/configuração devolv
 
 Fragmentos de até 900 caracteres referenciam arquivo, SHA-256 e posição. A recuperação é recalculada em memória; o cache de documentos usa conteúdo, digest e endpoint. Não há PostgreSQL/pgvector nesta etapa. Rastros de API são devolvidos na resposta, sem persistência; os experimentos arquivam rastros em JSON.
 
-Não há ferramentas de alteração nem consulta de pedidos. Revisão obrigatória é um campo de saída, não encaminhamento executado. Citação literal não prova que a política escolhida responda à pergunta.
+Há consulta de pedidos sintéticos via orders.py, com validação integral do arquivo, hash e snapshot. service.py combina o registro com uma seção independente de política, sem enviar dados do pedido ao modelo. O roteamento usa request_type, não uma decisão do LLM. Não há ferramentas de alteração. Veja [contrato e fluxo](order-tool.md). Revisão obrigatória é um campo de saída, não encaminhamento executado. Citação literal não prova que a política escolhida responda à pergunta.

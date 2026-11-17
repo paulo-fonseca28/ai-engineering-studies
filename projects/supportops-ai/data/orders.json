@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "snapshot_at": "2026-11-17T12:00:00Z",
+  "orders": [
+    {
+      "order_id": "DEMO-1001",
+      "status": "received",
+      "updated_at": "2026-11-17T11:30:00Z",
+      "items": [
+        {
+          "sku": "ITEM-01",
+          "name": "Refeição de demonstração",
+          "quantity": 1,
+          "unit_price_cents": 2500
+        },
+        {
+          "sku": "ITEM-02",
+          "name": "Bebida de demonstração",
+          "quantity": 2,
+          "unit_price_cents": 500
+        }
+      ],
+      "currency": "BRL",
+      "total_cents": 3500
+    },
+    {
+      "order_id": "DEMO-1002",
+      "status": "preparing",
+      "updated_at": "2026-11-17T11:30:00Z",
+      "items": [
+        {
+          "sku": "ITEM-01",
+          "name": "Refeição de demonstração",
+          "quantity": 1,
+          "unit_price_cents": 2500
+        },
+        {
+          "sku": "ITEM-02",
+          "name": "Bebida de demonstração",
+          "quantity": 2,
+          "unit_price_cents": 500
+        }
+      ],
+      "currency": "BRL",
+      "total_cents": 3500
+    },
+    {
+      "order_id": "DEMO-1003",
+      "status": "out_for_delivery",
+      "updated_at": "2026-11-17T11:30:00Z",
+      "items": [
+        {
+          "sku": "ITEM-01",
+          "name": "Refeição de demonstração",
+          "quantity": 1,
+          "unit_price_cents": 2500
+        },
+        {
+          "sku": "ITEM-02",
+          "name": "Bebida de demonstração",
+          "quantity": 2,
+          "unit_price_cents": 500
+        }
+      ],
+      "currency": "BRL",
+      "total_cents": 3500
+    },
+    {
+      "order_id": "DEMO-1004",
+      "status": "delivered",
+      "updated_at": "2026-11-17T11:30:00Z",
+      "items": [
+        {
+          "sku": "ITEM-01",
+          "name": "Refeição de demonstração",
+          "quantity": 1,
+          "unit_price_cents": 2500
+        },
+        {
+          "sku": "ITEM-02",
+          "name": "Bebida de demonstração",
+          "quantity": 2,
+          "unit_price_cents": 500
+        }
+      ],
+      "currency": "BRL",
+      "total_cents": 3500
+    },
+    {
+      "order_id": "DEMO-1005",
+      "status": "cancelled",
+      "updated_at": "2026-11-17T11:30:00Z",
+      "items": [
+        {
+          "sku": "ITEM-01",
+          "name": "Refeição de demonstração",
+          "quantity": 1,
+          "unit_price_cents": 2500
+        },
+        {
+          "sku": "ITEM-02",
+          "name": "Bebida de demonstração",
+          "quantity": 2,
+          "unit_price_cents": 500
+        }
+      ],
+      "currency": "BRL",
+      "total_cents": 3500
+    }
+  ]
+}

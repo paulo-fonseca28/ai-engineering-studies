@@ -1,0 +1,234 @@
+{
+  "name": "lookup_order",
+  "version": "1",
+  "read_only": true,
+  "input_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "order_id": {
+        "maxLength": 9,
+        "minLength": 9,
+        "pattern": "^DEMO-[0-9]{4}$",
+        "title": "Order Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "title": "LookupOrderInput",
+    "type": "object"
+  },
+  "output_schema": {
+    "$defs": {
+      "DemoOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "maxLength": 9,
+            "minLength": 9,
+            "pattern": "^DEMO-[0-9]{4}$",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "received",
+              "preparing",
+              "out_for_delivery",
+              "delivered",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/OrderItem"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "currency": {
+            "const": "BRL",
+            "title": "Currency",
+            "type": "string"
+          },
+          "total_cents": {
+            "minimum": 0,
+            "title": "Total Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "order_id",
+          "status",
+          "updated_at",
+          "items",
+          "currency",
+          "total_cents"
+        ],
+        "title": "DemoOrder",
+        "type": "object"
+      },
+      "OrderItem": {
+        "additionalProperties": false,
+        "properties": {
+          "sku": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Sku",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity": {
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "unit_price_cents": {
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "quantity",
+          "unit_price_cents"
+        ],
+        "title": "OrderItem",
+        "type": "object"
+      },
+      "OrderSource": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset": {
+            "const": "orders.json",
+            "default": "orders.json",
+            "title": "Dataset",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "snapshot_at": {
+            "format": "date-time",
+            "title": "Snapshot At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "snapshot_at"
+        ],
+        "title": "OrderSource",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "tool": {
+        "const": "lookup_order",
+        "default": "lookup_order",
+        "title": "Tool",
+        "type": "string"
+      },
+      "tool_version": {
+        "const": "1",
+        "default": "1",
+        "title": "Tool Version",
+        "type": "string"
+      },
+      "read_only": {
+        "const": true,
+        "default": true,
+        "title": "Read Only",
+        "type": "boolean"
+      },
+      "synthetic": {
+        "const": true,
+        "default": true,
+        "title": "Synthetic",
+        "type": "boolean"
+      },
+      "outcome": {
+        "enum": [
+          "found",
+          "not_found",
+          "unavailable"
+        ],
+        "title": "Outcome",
+        "type": "string"
+      },
+      "order": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/DemoOrder"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "source": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/OrderSource"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "message": {
+        "title": "Message",
+        "type": "string"
+      },
+      "error_code": {
+        "anyOf": [
+          {
+            "const": "orders_data_unavailable",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Error Code"
+      },
+      "duration_ms": {
+        "minimum": 0,
+        "title": "Duration Ms",
+        "type": "number"
+      }
+    },
+    "required": [
+      "outcome",
+      "message",
+      "duration_ms"
+    ],
+    "title": "OrderLookupResult",
+    "type": "object"
+  }
+}
