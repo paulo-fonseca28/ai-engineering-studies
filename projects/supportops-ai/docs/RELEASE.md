@@ -23,6 +23,6 @@ A versão final do contrato também passou nos [17 checks grounded](../evaluatio
 
 Concluídos: aplicação local, inferência real, ferramentas delimitadas, confirmação, persistência, fontes/rastros, testes dos caminhos críticos, workflow importável/executável, relatórios por comando, capturas/vídeo e documentação técnica.
 
-CI e build Docker: configuração publicada nesta entrega; o resultado da execução remota será registrado após conclusão. Hospedagem pública não foi contratada/configurada. Isso é uma dependência de ambiente separada, não uma capacidade demonstrada.
+CI remota e build Docker passaram no commit e7b72ee: [GitHub Actions — execução 44373467038](https://github.com/paulo-fonseca28/ai-engineering-studies/actions/runs/44373467038). A execução aprovou instalação, 103 testes Python, teste JavaScript, 2 testes Chromium, 17 checks HTTP demo e build da imagem, com artefatos anexados. O perfil Compose completo não foi iniciado neste ambiente; API, n8n e receptor foram exercitados como processos locais separados. Hospedagem pública não foi contratada/configurada. Isso é uma dependência de ambiente separada, não uma capacidade demonstrada.
 
 Decisões explícitas: SQLite e busca em memória atendem este corpus; não foram introduzidos PostgreSQL/pgvector ou múltiplos agentes apenas para acrescentar tecnologias. Autenticação é compartilhada, não autorização por cliente. A aplicação permanece de demonstração, sem dados ou operações reais.

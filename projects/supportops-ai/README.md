@@ -85,7 +85,7 @@ OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_release --grounded
 
 Use nomes de relatório ainda inexistentes. Os testes de navegador criam banco temporário e usam um token exclusivo de teste; requerem Node.js 24. Para gravar com inferência real: `BROWSER_MODE=grounded DEMO_SLOW_MO=200 npm run test:e2e`.
 
-Resultados executados: **103 testes Python**, **1 teste JavaScript** e **2 testes de navegador**, além de **17 checks HTTP em demo e 17 em grounded**. A instalação em venv novo e `pip check` passaram. Veja o [fechamento técnico](docs/RELEASE.md) para evidências e limites de cada verificação.
+[CI aprovada, incluindo build Docker](https://github.com/paulo-fonseca28/ai-engineering-studies/actions/runs/44373467038). Resultados executados: **103 testes Python**, **1 teste JavaScript** e **2 testes de navegador**, além de **17 checks HTTP em demo e 17 em grounded**. A instalação em venv novo e `pip check` passaram. Veja o [fechamento técnico](docs/RELEASE.md) para evidências e limites de cada verificação.
 
 Qualidade histórica do seletor: documento esperado em 10/12 respondíveis de desenvolvimento e 12/12 da última bateria sintética; ainda houve políticas irrelevantes em 2/6 perguntas sem resposta e falta de esclarecimento em 2/3 ambiguidades. Os testes de integração desta versão não são um novo benchmark de qualidade. Todos os conjuntos publicados estão expostos, sem validação humana independente. [Resultados completos e falhas preservadas](evaluation/RESULTS_V3.md).
 

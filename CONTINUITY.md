@@ -2,7 +2,7 @@
 
 ## Objetivo atual
 
-Usuário pediu concluir todo o SupportOps antes de iniciar DemandLab. Não iniciar DemandLab automaticamente. SupportOps 1.0 implementado; finalizar conferência do GitHub Actions e registrar resultado remoto antes de declarar encerramento.
+Usuário pediu concluir todo o SupportOps antes de iniciar DemandLab. Não iniciar DemandLab automaticamente. SupportOps 1.0 concluído como aplicação demonstrável. CI remota aprovada no commit e7b72ee, execução 44373467038, incluindo build Docker. O fechamento documental posterior não altera código. DemandLab aguardará uma nova solicitação.
 
 ## Implementação concluída
 
@@ -38,6 +38,10 @@ npm ci --prefix integrations/runtime
 ```
 
 Grounded exige Ollama e modelos locais qwen3:1.7b / qwen3-embedding:0.6b. Runtime instalado em ~/.local/share/supportops-runtime/bin/ollama; verificar disponibilidade antes de iniciar. Não reinstalar modelos. Nesta máquina Playwright precisou das bibliotecas extraídas em .tooling/browser-libs/root/usr/lib/x86_64-linux-gnu (LD_LIBRARY_PATH); instalação padrão com --with-deps atende a CI Ubuntu. Ferramentas locais ignoradas em .tooling, não parte da aplicação.
+
+## Encerramento
+
+Código, relatórios, vídeo, capturas e workflow publicados no GitHub. GitHub Actions: https://github.com/paulo-fonseca28/ai-engineering-studies/actions/runs/44373467038 . Testes e build Docker passaram. Compose completo não foi iniciado localmente; integração equivalente API → n8n → sink foi executada em processos separados. Não há experimento longo pendente. Ollama foi iniciado para as verificações; disponibilidade futura não é garantida.
 
 ## Publicação e limites
 
