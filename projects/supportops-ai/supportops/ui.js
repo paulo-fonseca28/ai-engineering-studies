@@ -3,8 +3,12 @@ const el = id => document.getElementById(id);
 const labels = {received:'Recebido', preparing:'Em preparo', out_for_delivery:'Em entrega', delivered:'Entregue', cancelled:'Cancelado'};
 const errors = {order_not_found:'Pedido não encontrado.', order_requires_review_or_is_terminal:'Este estado não permite cancelamento nesta simulação.', proposal_expired:'A proposta expirou. Consulte e prepare outra.', order_changed_since_proposal:'O pedido mudou. Consulte novamente.', proposal_already_confirmed:'Esta proposta já foi confirmada.', idempotency_key_conflict:'Conflito na chave da operação. Consulte o pedido.', simulation_store_unavailable:'A base da simulação está indisponível.'};
 let order = null, proposal = null, key = null, busy = false;
+let ticket = null, handoffKey = null;
 function render() {
   el('search').disabled = busy;
+  el('ask').disabled = busy;
+  el('refresh-queue').disabled = busy;
+  el('handoff').disabled = busy || !ticket || !el('handoff-consent').checked;
   el('order').disabled = busy;
   el('propose').hidden = !order || order.status !== 'received' || !!proposal;
   el('propose').disabled = busy;
@@ -15,10 +19,12 @@ function render() {
 }
 function clearProposal() { proposal = null; key = null; el('consent').checked = false; }
 async function api(path, body) {
-  const response = await fetch(path, body ? {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : {});
+  const headers = {'Content-Type':'application/json'};
+  if (el('token').value.trim()) headers.Authorization = 'Bearer ' + el('token').value.trim();
+  const response = await fetch(path, body ? {method:'POST',headers,body:JSON.stringify(body)} : {headers});
   const data = await response.json();
   if (!response.ok) {
-    const error = new Error(errors[data.detail] || 'Solicitação recusada. Confira os dados e consulte novamente.');
+    const error = new Error((data.detail === 'authentication_required' ? 'Informe um token válido em Acesso ao ambiente.' : errors[data.detail]) || 'Solicitação recusada. Confira os dados e consulte novamente.');
     error.status = response.status;
     throw error;
   }
@@ -68,3 +74,55 @@ el('confirm').addEventListener('click', () => {
   });
 });
 render();
+
+function showTicket(result) {
+  ticket = result; handoffKey = crypto.randomUUID();
+  el('handoff-consent').checked = false;
+  el('handoff-result').textContent = '';
+  el('answer-empty').hidden = true;
+  el('answer-content').hidden = false;
+  el('answer').textContent = result.answer;
+  el('answer-meta').textContent = `Modo ${result.mode} · ${result.inference_status} · revisão necessária`;
+  el('trace').textContent = JSON.stringify({trace_id:result.trace_id, duration_ms:result.duration_ms, usage:result.usage, order_source:result.order_source, simulation_order:result.simulation_order, trace:result.trace}, null, 2);
+  el('sources').replaceChildren();
+  for (const source of result.sources) {
+    const li = document.createElement('li');
+    for (const [className, text] of [['source-title', source.title + (result.citations.includes(source.id) ? ' · citada' : ' · recuperada')], ['source-text', source.text], ['source-id', source.id]]) {
+      const span = document.createElement('span'); span.className = className; span.textContent = text; li.appendChild(span);
+    }
+    el('sources').appendChild(li);
+  }
+  if (!result.sources.length) { const li = document.createElement('li'); li.textContent = 'Nenhuma fonte documental nesta resposta.'; el('sources').appendChild(li); }
+}
+el('ticket-form').addEventListener('submit', event => {
+  event.preventDefault();
+  run(async () => {
+    const requestType = el('request-type').value;
+    const body = {question:el('question').value, request_type:requestType};
+    if (requestType !== 'policy') { body.order_id = el('order').value; body.order_source = 'simulation'; }
+    showTicket(await api('/tickets', body));
+    el('notice').textContent = 'Resposta preparada. Confira as fontes e o rastro antes de orientar o atendimento.';
+  });
+});
+el('handoff-consent').addEventListener('change', render);
+el('handoff').addEventListener('click', () => {
+  if (!ticket || !el('handoff-consent').checked) return;
+  run(async () => {
+    const result = await api('/handoffs', {trace_id:ticket.trace_id, reason:el('reason').value, confirmed:true, idempotency_key:handoffKey});
+    el('handoff-result').textContent = result.message + ' Registro: ' + result.handoff_id;
+    el('handoff-consent').checked = false;
+    el('notice').textContent = 'Encaminhamento salvo na fila local de revisão.';
+  });
+});
+el('refresh-queue').addEventListener('click', () => run(async () => {
+  const entries = await api('/handoffs'); el('queue').replaceChildren();
+  for (const entry of entries) {
+    const li = document.createElement('li'); li.textContent = entry.reason + ' · ';
+    const button = document.createElement('button'); button.className = 'secondary'; button.textContent = 'Inspecionar atendimento';
+    button.addEventListener('click', () => run(async () => { showTicket(await api('/tickets/' + entry.trace_id)); el('notice').textContent = 'Atendimento recuperado do histórico.'; }));
+    li.appendChild(button); el('queue').appendChild(li);
+  }
+  if (!entries.length) { const li = document.createElement('li'); li.textContent = 'Nenhum encaminhamento registrado.'; el('queue').appendChild(li); }
+  el('notice').textContent = `${entries.length} encaminhamento(s) na fila local (até 100 mais recentes).`;
+}));
+api('/health').then(health => { el('runtime').textContent = `Modo: ${health.mode}\nBusca: ${health.retrieval}`; }).catch(() => { el('runtime').textContent = 'API indisponível'; });

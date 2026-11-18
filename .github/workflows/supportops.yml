@@ -1,0 +1,41 @@
+name: SupportOps tests
+on:
+  push:
+    paths: ['projects/supportops-ai/**', '!projects/supportops-ai/docs/**', '!projects/supportops-ai/README.md', '!projects/supportops-ai/evaluation/reports/**', '.github/workflows/supportops.yml']
+  pull_request:
+    paths: ['projects/supportops-ai/**', '!projects/supportops-ai/docs/**', '!projects/supportops-ai/README.md', '!projects/supportops-ai/evaluation/reports/**', '.github/workflows/supportops.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/supportops-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: projects/supportops-ai/package-lock.json
+      - run: python -m venv .venv
+      - run: .venv/bin/pip install -r requirements.txt
+      - run: .venv/bin/python -m unittest discover -s tests -v
+      - run: npm ci
+      - run: npm run test:ui
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: .venv/bin/python -m evaluation.verify_release --output evaluation/reports/ci-release.json
+      - run: docker build -t supportops:test .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supportops-validation
+          path: |
+            projects/supportops-ai/test-results/
+            projects/supportops-ai/evaluation/reports/ci-release.json

@@ -1,16 +1,14 @@
 # SupportOps AI
 
-Assistente experimental para uma operação **fictícia** de delivery. Consulta seis políticas sintéticas e devolve orientações com fontes e rastreamento. Não consulta pedidos reais nem executa cancelamentos, reembolsos ou encaminhamentos.
+Aplicação de estudos em engenharia de IA para uma operação **fictícia** de delivery: prepara respostas com fontes, consulta pedidos, registra encaminhamentos para revisão e executa cancelamentos sintéticos somente após confirmação explícita.
 
-## Estado verificado
+![Atendimento com fontes e revisão](docs/demo/supportops-desktop.png)
 
-**91 testes passaram em 17/11/2026**, incluindo consultas de pedidos e cancelamento simulado com confirmação, persistência e idempotência. A validação anterior de políticas também incluiu nove solicitações HTTP, quatro checks de saúde e dois testes reais de exclusão de documentos não aprovados. O modo grounded voltou a produzir citações úteis: documento esperado em 10/12 perguntas respondíveis de desenvolvimento e 12/12 da bateria final de 24 perguntas.
+[Vídeo da demonstração](docs/demo/supportops-demo.webm) · [Arquitetura](docs/architecture.md) · [Resultados do modelo](evaluation/RESULTS_V3.md) · [Limitações](docs/limitations.md) · [Artigo técnico](docs/technical-note.md)
 
-Todas as citações grounded preservaram o texto aprovado. Ainda ocorreram políticas irrelevantes em 2/6 perguntas sem resposta e falta de esclarecimento em 2/3 ambiguidades da bateria final. Os dados são sintéticos e não têm validação humana independente. Veja [resultados completos, tentativas anteriores e limites](evaluation/RESULTS_V3.md).
+## Executar
 
-## Executar sem modelos (Python 3.12)
-
-Na raiz do repositório:
+Python 3.12. Na raiz do repositório:
 
 ```bash
 cd projects/supportops-ai
@@ -19,67 +17,82 @@ python3 -m venv .venv
 .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
 ```
 
-Abra http://127.0.0.1:8000 para consultar pedidos simulados, revisar propostas e confirmar cancelamentos. Use http://127.0.0.1:8000/docs para enviar perguntas sobre políticas. O padrão é demonstração com busca lexical, sem credenciais ou serviço de modelos.
+Abra **http://127.0.0.1:8000**. O padrão `demo + lexical` funciona sem modelos, contas ou credenciais. A tela identifica o modo e não apresenta trechos recuperados como geração de LLM. Contratos em `/docs`.
 
-```bash
-curl -s http://127.0.0.1:8000/tickets -H 'Content-Type: application/json' -d '{"question":"Qual a política de reembolso?"}'
-.venv/bin/python -m unittest discover -s tests -v
-```
+Para reproduzir uma demonstração sem reutilizar o estado anterior, aponte `SUPPORTOPS_ACTION_DB` para um arquivo novo. O banco padrão fica em `var/actions.sqlite3` e persiste entre reinícios.
 
-## Consultar pedidos sintéticos
+## Roteiro de demonstração
 
-A API 0.5 oferece `GET /orders/DEMO-1003` e os tipos `order_status` e `order_policy` em `/tickets`. Os registros são estáticos, fictícios e somente leitura. A consulta de estado dispensa modelos; a combinação com políticas aceita demo ou grounded. Veja [exemplos, contratos, códigos HTTP e limites](docs/order-tool.md).
+1. Consulte `DEMO-1001` e envie “Qual a política de cancelamento?”.
+2. Inspecione resposta, fontes, referências, duração, consumo e rastro.
+3. Marque a confirmação do encaminhamento e registre-o na fila local; use “Atualizar fila” e “Inspecionar atendimento”.
+4. Prepare o cancelamento, revise pedido/estado/validade e confirme explicitamente.
+5. Consulte novamente ou peça somente o estado: o pedido aparece cancelado, inclusive após reiniciar a API.
+6. Consulte `DEMO-1002`: o estado em preparo não permite cancelamento automático. `DEMO-9999` demonstra ausência de dados.
 
-## Simular cancelamento com confirmação
+Nenhuma ação chama pagamentos ou serviços reais. Encaminhamento significa registro numa fila local; não significa notificação enviada a uma pessoa. O fluxo e as ferramentas são controlados por estados e contratos, não por um agente autônomo.
 
-A API 0.6 adiciona propostas de cancelamento e confirmação explícita em `/simulation`, com SQLite e prevenção de execução duplicada. Somente pedidos fictícios recebidos são elegíveis. [Executar a simulação e entender a separação do snapshot](docs/simulation.md).
+## Inferência local real
 
-## Executar com seleção de políticas local
-
-Com [Ollama](https://docs.ollama.com/linux) instalado, inicie `ollama serve` em outro terminal. Na instalação isolada deste ambiente, o executável fica em `~/.local/share/supportops-runtime/bin/ollama`; use `export PATH="$HOME/.local/share/supportops-runtime/bin:$PATH"` para encontrá-lo. Não há serviço de inicialização automática.
+Use Ollama com os modelos já calibrados:
 
 ```bash
 ollama pull qwen3:1.7b
 ollama pull qwen3-embedding:0.6b
+# Inicie ollama serve se o serviço ainda não estiver rodando.
 SUPPORTOPS_MODE=grounded SUPPORTOPS_RETRIEVAL=semantic OLLAMA_MODEL=qwen3:1.7b .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
 ```
 
-O modelo escolhe uma política, esclarecimento ou recusa. Python monta a citação integral aprovada ou uma mensagem fixa; não mostra redação livre do modelo. `answer_kind` distingue `policy_quote`, `clarification` e `abstention`. `needs_review=true` é obrigatório neste modo e não significa que um chamado externo foi aberto.
+O modo `grounded` verifica hashes, recupera políticas, aplica um limiar e pede ao modelo uma referência curta. Python devolve a citação integral aprovada ou uma mensagem fixa de esclarecimento/recusa. Todas as respostas exigem revisão. O modo `ollama` de geração livre continua disponível apenas para pesquisa, com falhas documentadas; não é aceito na composição de pedido e política.
 
-## Modos e configuração
+`SUPPORTOPS_RETRIEVAL` aceita `lexical`, `semantic` e `hybrid` (RRF). Grounded exige semantic. O limiar 0,47 e o digest do embedding estão em `data/grounding-v3.json`; trocar o modelo/corpus exige revisão e nova calibração. As variáveis estão em [.env.example](.env.example); Python lê variáveis exportadas, sem carregar esse arquivo automaticamente.
 
-| Modo | Comportamento | Dependências |
-| --- | --- | --- |
-| `demo` (padrão) | Exibe trechos recuperados; não gera texto com LLM. | Nenhum modelo com busca lexical; embeddings para semantic/hybrid. |
-| `ollama` | Geração livre experimental, com validação de formato/citações. | Modelo de chat e, conforme estratégia, embeddings. |
-| `grounded` | Seleção restrita e renderização literal de política aprovada. | Chat, embeddings e estratégia semantic. |
+## Contratos principais
 
-`SUPPORTOPS_RETRIEVAL` aceita `lexical`, `semantic` ou `hybrid`. A busca híbrida usa RRF. O núcleo usa índice em memória; vetores de documentos são reutilizados por conteúdo, digest do modelo e endpoint. Não há banco vetorial persistente.
-
-Variáveis de referência em [.env.example](.env.example); o aplicativo não carrega `.env` automaticamente. `OLLAMA_URL` aponta por padrão para `http://localhost:11434/api/chat`; `OLLAMA_EMBEDDING_MODEL` é `qwen3-embedding:0.6b`. `/health` verifica a aplicação, não a disponibilidade dos modelos. Erros são explícitos em `inference_status` e `trace`, sem fallback silencioso para outra estratégia.
-
-Em grounded, hashes dos documentos são verificados antes da recuperação; fontes novas ou modificadas são excluídas. O limiar de 0,47 e o digest de embeddings vêm de [grounding-v3.json](data/grounding-v3.json). Outro modelo exige recalibração. Ao editar uma política, revisar seu conteúdo, aprovar deliberadamente o novo hash e repetir a avaliação. O manifesto não deve ser atualizado automaticamente durante a execução. Preservação do texto e similaridade não garantem relevância.
-
-## Avaliação e verificação
-
-Execute na pasta do projeto, escolhendo saídas ainda inexistentes:
+| Endpoint | Função |
+| --- | --- |
+| `POST /tickets` | Preparar resposta; salva fontes e rastro. |
+| `GET /tickets/{trace_id}` | Inspecionar atendimento persistido. |
+| `GET /orders/{id}` | Consultar o snapshot estático original. |
+| `GET /simulation/orders/{id}` | Consultar o estado persistente da simulação. |
+| `POST /simulation/cancellations/proposals` | Preparar proposta válida por cinco minutos. |
+| `POST /simulation/cancellations/confirmations` | Confirmar alteração com chave de idempotência. |
+| `POST /handoffs` / `GET /handoffs` | Registrar encaminhamento confirmado / consultar fila local. |
+| `POST /integrations/tickets` | Preparar atendimento com recibo deduplicado por `event_id`. |
+| `GET /health` | Verificar processo e configuração; não testa o modelo. |
 
 ```bash
-OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strategy semantic --mode grounded --repeats 3 --output evaluation/reports/local-dev.json
-OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_runtime --output evaluation/reports/local-runtime.json
-.venv/bin/python -m evaluation.compare --repeats 3 --output evaluation/reports/local-retrieval.json
+curl -s http://127.0.0.1:8000/tickets -H 'Content-Type: application/json' -d '{"question":"Qual a política de cancelamento?","request_type":"order_policy","order_id":"DEMO-1001","order_source":"simulation"}'
 ```
 
-Relatórios incluem respostas, métricas, hashes e identificação do modelo. As partições já publicadas foram executadas e agora são regressão; não tratá-las como testes cegos para novos ajustes. [Protocolo](evaluation/README.md) · [Resultados v3](evaluation/RESULTS_V3.md) · [Resultados v2](evaluation/RESULTS_V2.md) · [Baseline v1](evaluation/RESULTS.md).
+`request_type`: `policy`, `order_status` ou `order_policy`. A interface usa `order_source=simulation`; para compatibilidade, clientes que omitem esse campo continuam no `snapshot`. As duas fontes são identificadas explicitamente. IDs nunca são inferidos pelo modelo. [Detalhes dos pedidos](docs/order-tool.md) · [Confirmação e persistência](docs/simulation.md).
 
-Dependências diretas em `requirements.in` e versões transitivas fixadas em `requirements.txt`. O template [CI](docs/ci-tests.yml) ainda não está ativado: a credencial GitHub atual não permite publicar workflows. CI remoto, Docker e deploy público da aplicação continuam pendentes.
+## Integração n8n
 
-## Próximas entregas
+[Workflow importável](integrations/n8n-workflow.json): webhook autenticado → API → sistema HTTP externo de teste. Os dois serviços guardam recibos duráveis; reenvios com o mesmo evento/payload recuperam o mesmo resultado, e payload diferente com o mesmo ID é rejeitado. Falhas ficam nas execuções do n8n. [Instalação, execução e evidências](integrations/README.md).
 
-Aprimorar esclarecimento de ambiguidades e tratamento de perguntas sem evidência, mantendo resultados anteriores. A consulta somente leitura de pedidos sintéticos está implementada. Cancelamento em simulação separada já tem confirmação/idempotência e SQLite. A interface local de revisão está disponível na raiz da API. Próximas etapas: integração explícita das consultas com o estado da simulação, autenticação e integração n8n. DemandLab permanece um projeto futuro separado.
+## Validação
 
-[Arquitetura](docs/architecture.md) · [Limitações](docs/limitations.md) · [Decisão do modo grounded](docs/decisions/0004-grounded-responses.md) · [Checkpoint](../../CONTINUITY.md)
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+npm ci
+npm run test:ui
+npx playwright install --with-deps chromium
+npm run test:e2e
+.venv/bin/python -m evaluation.verify_release --output evaluation/reports/local-release.json
+OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_release --grounded --output evaluation/reports/local-grounded.json
+```
 
-## Teste da interface
+Use nomes de relatório ainda inexistentes. Os testes de navegador criam banco temporário e usam um token exclusivo de teste; requerem Node.js 24. Para gravar com inferência real: `BROWSER_MODE=grounded DEMO_SLOW_MO=200 npm run test:e2e`.
 
-Com Node.js disponível, execute `node --test tests/ui/review.test.cjs` na pasta do projeto. O teste verifica consentimento obrigatório, repetição após falha de rede com a mesma chave e atualização do estado na tela. Foram aprovados 91 testes Python, um teste JavaScript e a entrega real de HTML/JS via HTTP. Não houve validação visual automatizada em navegador nesta entrega.
+Resultados executados: **103 testes Python**, **1 teste JavaScript** e **2 testes de navegador**, além de **17 checks HTTP em demo e 17 em grounded**. A instalação em venv novo e `pip check` passaram. Veja o [fechamento técnico](docs/RELEASE.md) para evidências e limites de cada verificação.
+
+Qualidade histórica do seletor: documento esperado em 10/12 respondíveis de desenvolvimento e 12/12 da última bateria sintética; ainda houve políticas irrelevantes em 2/6 perguntas sem resposta e falta de esclarecimento em 2/3 ambiguidades. Os testes de integração desta versão não são um novo benchmark de qualidade. Todos os conjuntos publicados estão expostos, sem validação humana independente. [Resultados completos e falhas preservadas](evaluation/RESULTS_V3.md).
+
+## Operação e empacotamento
+
+Docker: `docker compose up --build` (porta vinculada ao localhost, volume persistente). O perfil `integration` adiciona n8n e o sistema de teste: `docker compose --profile integration up --build`. Grounded em contêiner exige Ollama acessível pelo endereço configurado; não inicia nem baixa modelos automaticamente.
+
+Configure `SUPPORTOPS_API_KEY` para exigir `Authorization: Bearer ...` nos dados e operações. A tela recebe o token em “Acesso ao ambiente” e o mantém só na memória da página. `SUPPORTOPS_ENV=production` exige chave de pelo menos 32 caracteres. Esse token compartilhado não substitui contas individuais ou autorização por cliente. [Operação, backup e hospedagem](docs/operations.md).
+
+Código sob [MIT](../../LICENSE). Políticas e dados sintéticos próprios sob CC0-1.0, conforme [dados](data/README.md). DemandLab é um projeto separado e ainda não foi iniciado.

@@ -7,3 +7,7 @@ var/
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
+node_modules/
+.tooling/
+playwright-report/
+test-results/

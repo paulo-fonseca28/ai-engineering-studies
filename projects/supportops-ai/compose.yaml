@@ -1,0 +1,51 @@
+services:
+  supportops:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      SUPPORTOPS_MODE: ${SUPPORTOPS_MODE:-demo}
+      SUPPORTOPS_RETRIEVAL: ${SUPPORTOPS_RETRIEVAL:-lexical}
+      SUPPORTOPS_API_KEY: ${SUPPORTOPS_API_KEY:-}
+      SUPPORTOPS_ENV: ${SUPPORTOPS_ENV:-local}
+      SUPPORTOPS_ACTION_DB: /app/var/actions.sqlite3
+      OLLAMA_URL: http://host.docker.internal:11434/api/chat
+      OLLAMA_MODEL: qwen3:1.7b
+      OLLAMA_EMBEDDING_MODEL: qwen3-embedding:0.6b
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - supportops-data:/app/var
+    restart: unless-stopped
+  sink:
+    build: .
+    profiles: [integration]
+    command: ["uvicorn", "integrations.sink:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      SUPPORTOPS_SINK_DB: /app/var/sink.sqlite3
+      SUPPORTOPS_SINK_KEY: ${SUPPORTOPS_SINK_KEY:-}
+    volumes:
+      - sink-data:/app/var
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.48.4
+    profiles: [integration]
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_SSRF_ALLOWED_HOSTNAMES: supportops,sink
+      SUPPORTOPS_API_URL: http://supportops:8000
+      SUPPORTOPS_SINK_URL: http://sink:8000
+      SUPPORTOPS_API_KEY: ${SUPPORTOPS_API_KEY:-}
+      SUPPORTOPS_SINK_KEY: ${SUPPORTOPS_SINK_KEY:-}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    depends_on:
+      - supportops
+      - sink
+volumes:
+  supportops-data:
+  sink-data:
+  n8n-data:

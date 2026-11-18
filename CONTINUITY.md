@@ -1,77 +1,46 @@
-# Ponto de retomada — 17/11/2026
+# Continuidade — 18/11/2026
 
-## Entrega atual — interface local de revisão
+## Objetivo atual
 
-API 0.7: GET / serve ui.html; /ui.js contém fluxo sem dependências. Consulta somente /simulation, prepara proposta, exige consentimento, confirma e mostra estado final. Falha de rede preserva chave/proposta para nova tentativa na mesma página. Recarregar perde contexto; descartar na tela não revoga a proposta do servidor. Nenhum modelo decide a ação.
+Usuário pediu concluir todo o SupportOps antes de iniciar DemandLab. Não iniciar DemandLab automaticamente. SupportOps 1.0 implementado; finalizar conferência do GitHub Actions e registrar resultado remoto antes de declarar encerramento.
 
-Validação: 91 testes Python + 1 teste Node (node --test tests/ui/review.test.cjs), além de HTML/JS por HTTP real em servidor temporário encerrado. Sem inspeção visual em navegador. Próxima etapa: integrar explicitamente consultas ao estado simulado e preparar uma demonstração reproduzível; autenticação, CI ativo e n8n pendentes. DemandLab ainda não iniciado. Evitar ampliar indefinidamente o SupportOps antes de começar o segundo projeto.
+## Implementação concluída
 
-## Entrega anterior — cancelamento sintético com confirmação
+- API 1.0 e interface completa: pergunta, políticas/fontes, estado simulado, rastros/consumo, histórico e fila local de revisão.
+- /tickets aceita order_source=simulation; padrão legado snapshot preservado. Campos simulation_order e order_lookup distinguem fontes. Estado depois de cancelar é refletido na interface.
+- SQLite: estado, propostas, execuções, rastros, encaminhamentos e eventos. Cancelamento received → cancelled com proposta de 300s, versão, confirmação e replay atômico. Encaminhamento também confirmado e deduplicado, sem notificar pessoas.
+- Token compartilhado configurável; production exige pelo menos 32 caracteres. Não é autenticação por usuário ou autorização por cliente.
+- Workflow n8n 2.48.4 importável, executado com webhook autenticado, API e receptor HTTP separado. Falha, recuperação, replay e conflito comprovados, com uma linha por evento em cada banco. Execução demo e grounded reais preservadas em relatórios.
+- Dockerfile, Compose, CI em .github/workflows/supportops.yml. Usuário autorizou escopo workflow; gh auth status confirmou repo + workflow.
+- Capturas desktop/mobile e vídeo em docs/demo; artigo técnico, guias de execução, operações, integração e licença MIT.
 
-API 0.6: actions.py implementa SQLite em var/actions.sqlite3 (ou SUPPORTOPS_ACTION_DB), inicializado da fixture uma vez. /simulation/orders/{id} lê estado; /simulation/cancellations/proposals prepara cancelamento received → cancelled; /simulation/cancellations/confirmations exige confirmed=true, proposal_id e idempotency_key. Proposta expira em 300s; versão evita confirmação obsoleta; BEGIN IMMEDIATE torna mudança, consumo e resultado atômicos. Repetições recuperam o resultado original. Não há modelo executando ferramentas.
+## Validação
 
-91 testes passaram em 17/11/2026. Dez novos cobrem concorrência, persistência, rollback, contratos ASGI e erros. Sem nova avaliação de LLM. Documentação em docs/simulation.md. Bancos ignorados pelo Git; testes usam temporários. /orders e /tickets continuam no snapshot estático, explicitamente separado de /simulation. Não inferir que o cancelamento altera o snapshot.
+103 testes Python, 1 JavaScript, 2 Chromium. Browser executado em demo e grounded, com bancos temporários e token exclusivo de teste. Instalação em venv novo passou e pip check sem conflitos.
 
-Plano anterior, interface concluída acima: interface local de revisão/confirmação e decisão explícita sobre integrar consultas ao estado simulado; autenticação e migrações seguem pendentes. Evitar misturar fonte estática e mutável silenciosamente. DemandLab ainda planejado. Revisar status/log ao retomar; relatórios e limitações do seletor preservados.
+Relatórios: evaluation/reports/release-v1-demo.json, release-v1-grounded.json, release-v1-final-grounded.json (17 checks HTTP cada); n8n-v1-runtime.json e n8n-v1-grounded.json (workflow real). Esses checks são de integração, não novo benchmark de qualidade.
 
-## Entrega anterior de pedidos — 17/11/2026
+Resultados anteriores em evaluation/RESULTS_V3.md são preservados: 12/12 respondíveis finais, mas erros em 2/6 sem resposta e 2/3 ambiguidades. Todos os conjuntos já expostos; não tratar como cegos. Sem revisão humana independente. Não afirmar que relevância foi resolvida.
 
-API 0.5: lookup_order somente leitura, fixture com cinco estados, contratos estritos e rastros. GET /orders/{id}; POST /tickets aceita policy (padrão), order_status e order_policy. O último aceita demo/grounded, bloqueia geração livre ollama. ID explícito obrigatório, nenhum ID inferido pelo modelo. Registro ausente/corrompido impede consulta de políticas. Nenhuma alteração implementada.
+## Comandos
 
-81 testes passaram: 57 anteriores e 24 novos, incluindo integração ASGI. Contratos em docs/lookup-order.schema.json e exemplos/limites em docs/order-tool.md. Composição grounded validada com mocks, sem novos resultados reais de LLM. Relatórios anteriores preservados. Não há execução longa pendente nesta entrega.
-
-Plano anterior, concluído na simulação acima: desenhar e implementar alteração estritamente sintética com confirmação explícita e idempotência, definindo persistência e transições antes de expor ações. Não apresentar consulta atual como agente autônomo. As falhas anteriores de relevância continuam abertas. DemandLab ainda não implementado. Conferir git status/log; não reutilizar avaliações expostas como teste cego.
-
-## Estado anterior e evidências preservadas
-
-SupportOps AI: modo grounded v3.2 implementado, avaliado e documentado. DemandLab continua planejado, sem implementação. O usuário solicita progresso contínuo, READMEs coerentes e preservação do contexto entre sessões. Não considerar os dois projetos concluídos.
-
-Commits desta entrega antes da consolidação documental:
-- `8d5bdea`: referências curtas no seletor e testes; avaliação de desenvolvimento.
-- `0142321`: congelamento do heldout-v5, resultados de desenvolvimento e checks operacionais reproduzíveis.
-
-A documentação/relatórios/checkpoint foram consolidados em commit posterior. Conferir git status e log ao retomar. O checkpoint antigo de 31/10 foi substituído; seu histórico continua no Git.
-
-## O que foi concluído
-
-- Aplicado o payload do diagnóstico preservado em selector-label-probe-v3.json. Prompt ativo: `supportops/prompts/select-v3.txt`; anteriores preservados.
-- O modelo vê reference/title/text, escolhe quote_N/clarify/abstain e a aplicação converte quote_N no ID original. Nenhum texto livre do modelo é exibido em grounded.
-- Limiar e corpus não mudaram: `data/grounding-v3.json`, threshold 0.47, hashes aprovados e digest do embedding.
-- 57 testes passaram. Regressões cobrem referências de segunda fonte, manutenção do ID original e rejeição de referências desconhecidas/propriedades extras.
-- Desenvolvimento: 10/12 respondíveis com citação esperada, duas recusadas pelo limiar; 48/48 chamadas com contrato aceito. Ambiguidades ainda recebem políticas em vez de esclarecimento.
-- Heldout-v5, congelado antes da execução: 12/12 respondíveis com política esperada; 4/6 sem resposta sem citação; 1/3 ambiguidades esclarecidas. 63/63 chamadas aceitas. Todas as citações preservaram integralmente o texto.
-- 9 solicitações HTTP, 4 health checks e 2 probes reais de integridade de corpus passaram. Dependências passaram no pip check.
-- Relatório consolidado `projects/supportops-ai/evaluation/RESULTS_V3.md`; todos os resultados iniciais malsucedidos preservados.
-
-## Falhas ainda relevantes
-
-`heldout-v5-13` pediu protocolo de um pedido e recebeu política geral; `heldout-v5-15` pediu WhatsApp e recebeu política de itens. `heldout-v5-19/21` eram ambíguos e receberam políticas. Não confundir texto literal com resposta adequada. Nenhuma ação foi executada. `needs_review` sempre verdadeiro em grounded é uma regra, não competência do modelo.
-
-Todos os conjuntos existentes (dev, test, heldout-v3/v4/v5) já foram usados/expostos. Não reutilizar como validação independente nem ajustar configuração pelos erros finais sem declarar regressão. Se criar uma nova avaliação reservada, congelar antes e não repetir criação de testes para esconder erros. Dados/avaliações são sintéticos, sem validação humana independente. O modo ollama mantém geração livre de pesquisa com falhas documentadas.
-
-## Plano anterior (consulta já concluída acima)
-
-Avançar o produto com consulta somente leitura de pedidos sintéticos e contratos de ferramentas explícitos, antes de qualquer ação de alteração. Preservar revisão humana e limitar a resposta aos campos fornecidos pela ferramenta e políticas aprovadas. Cobrir ID inexistente, estados do pedido e rastreamento; não inventar ações executadas. Confirmação/idempotência, persistência, interface e n8n seguem como etapas posteriores. A melhoria de ambiguidades/evidência insuficiente permanece uma pendência explícita; não anunciar resolução.
-
-Se a prioridade for nova melhoria do seletor, usar apenas desenvolvimento para ajustes e comparar cobertura/recusa. Não repetir a calibração atual sem motivo nem sobrescrever relatórios. O modo padrão demo + lexical continua offline; grounded exige semantic.
-
-## Executar
-
-Na pasta `projects/supportops-ai`:
+Na pasta projects/supportops-ai:
 
 ```bash
-.venv/bin/python -m unittest discover -s tests -v
-export PATH="$HOME/.local/share/supportops-runtime/bin:$PATH"
-ollama serve
-# Em outro terminal:
-SUPPORTOPS_MODE=grounded SUPPORTOPS_RETRIEVAL=semantic OLLAMA_MODEL=qwen3:1.7b .venv/bin/uvicorn supportops.api:app --host 127.0.0.1 --port 8000
-OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_runtime --output evaluation/reports/local-runtime.json
+.venv/bin/python -m unittest discover -s tests -q
+npm ci
+npm run test:ui
+npx playwright install --with-deps chromium
+npm run test:e2e
+.venv/bin/python -m evaluation.verify_release --output evaluation/reports/NOME_NOVO.json
+npm ci --prefix integrations/runtime
+.venv/bin/python -m evaluation.verify_workflow --n8n integrations/runtime/node_modules/.bin/n8n --grounded --output evaluation/reports/NOME_NOVO.json
 ```
 
-Use um nome de saída ainda inexistente. Ollama 0.40.13 foi iniciado nesta sessão por ferramenta; sua persistência não é garantida. Verificar /api/tags antes de reiniciar. Modelos qwen3:1.7b e qwen3-embedding:0.6b já estão baixados. Runtime em ~/.local/share/supportops-runtime/bin/ollama. Não reinstalar sem verificar. Os servidores HTTP temporários do verificador foram encerrados; não há avaliação longa pendente.
+Grounded exige Ollama e modelos locais qwen3:1.7b / qwen3-embedding:0.6b. Runtime instalado em ~/.local/share/supportops-runtime/bin/ollama; verificar disponibilidade antes de iniciar. Não reinstalar modelos. Nesta máquina Playwright precisou das bibliotecas extraídas em .tooling/browser-libs/root/usr/lib/x86_64-linux-gnu (LD_LIBRARY_PATH); instalação padrão com --with-deps atende a CI Ubuntu. Ferramentas locais ignoradas em .tooling, não parte da aplicação.
 
-## Repositório e permissões
+## Publicação e limites
 
-Sandbox somente leitura: escrita, rede e testes com temporários exigem escalonamento. GitHub autenticado, remote HTTPS. Para push: `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin main`. Não imprimir credenciais. A credencial não tem permissão workflow; CI segue como template em docs/ci-tests.yml, não ativo. Não presumir que um push terminou: verificar a resposta e estado Git.
+Conferir git status/log antes de agir. Sandbox somente leitura exige escalonamento para escrita, testes e rede. Push HTTPS: git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin main. Nunca presumir término de push/CI; verificar resposta.
 
-Manter documentação pública focada nos estudos/implementação, sem informações pessoais de candidatura. Atualizar README, arquitetura, limitações e este checkpoint ao terminar a próxima entrega. O projeto ainda não tem autenticação, dados reais, ferramentas de alteração de pedidos reais, n8n ou deploy público da aplicação.
+Hospedagem pública não contratada/configurada; nenhum host ou orçamento foi definido. Não alegar deploy público. SQLite e busca em memória foram decisões explícitas; PostgreSQL/pgvector e múltiplos agentes não são usados. O projeto é demonstração funcional, não operação de clientes reais. Não incluir informações pessoais de candidatura na documentação pública.

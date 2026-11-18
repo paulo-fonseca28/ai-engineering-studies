@@ -1,0 +1,7 @@
+{
+  "name": "supportops-browser-validation",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {"test:ui": "node --test tests/ui/*.test.cjs", "test:e2e": "playwright test"},
+  "devDependencies": {"@playwright/test": "1.65.1"}
+}

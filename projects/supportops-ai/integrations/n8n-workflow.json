@@ -1,0 +1,126 @@
+{
+  "id": "SupportOpsDemoV1",
+  "name": "SupportOps — atendimento e registro idempotente",
+  "active": false,
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Solicitação",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "supportops-demo-v1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supportops-demo",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supportopsWebhookAuth",
+          "name": "SupportOps webhook"
+        }
+      }
+    },
+    {
+      "id": "api",
+      "name": "Preparar atendimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPPORTOPS_API_URL + '/integrations/tickets' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.SUPPORTOPS_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {
+          "timeout": 180000
+        }
+      }
+    },
+    {
+      "id": "sink",
+      "name": "Registrar no sistema de teste",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        580,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPPORTOPS_SINK_URL + '/events' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.SUPPORTOPS_SINK_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 180000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Solicitação": {
+      "main": [
+        [
+          {
+            "node": "Preparar atendimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar atendimento": {
+      "main": [
+        [
+          {
+            "node": "Registrar no sistema de teste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {}
+}

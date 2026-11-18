@@ -1,6 +1,6 @@
 # Cancelamento com confirmação em simulação
 
-API 0.6. Somente dados fictícios, sem modelos ou serviços externos envolvidos. O operador revisa uma proposta antes de enviar a confirmação. A API não comprova identidade nem revisão humana: confirmed=true é uma declaração do cliente. Use localmente, sem pedidos reais.
+API 1.0. Somente dados fictícios, sem modelos ou serviços externos envolvidos. O operador revisa uma proposta antes de enviar a confirmação. A API não comprova identidade nem revisão humana: confirmed=true é uma declaração do cliente. Use localmente, sem pedidos reais.
 
 ## Executar
 
@@ -32,12 +32,14 @@ Repita exatamente a confirmação para recuperar o mesmo resultado. A chave deve
 
 O banco é criado e populado uma única vez a partir da fixture validada, no primeiro acesso a /simulation (inclusive GET). Caminho padrão: var/actions.sqlite3, relativo à pasta do projeto. SUPPORTOPS_ACTION_DB permite um caminho alternativo. Reiniciar o processo preserva os dados; editar a fixture não repopula bancos existentes. Para outra demonstração, use um caminho de banco novo. Arquivos locais de banco não são versionados.
 
-GET /simulation/orders/{id} lê o estado mutável da simulação, com versão. GET /orders/{id} e POST /tickets continuam consultando o snapshot estático de orders.json. Esses universos são deliberadamente separados: uma simulação cancelada não altera o snapshot. A simulação não é invocada pelo modelo nem pelo fluxo de tickets. A interface na raiz da API usa exclusivamente /simulation. Em falhas de rede, uma nova tentativa na mesma tela preserva proposta e chave. Recarregar a página perde esse contexto; consulte o estado antes de iniciar outra operação. Descartar na tela não revoga a proposta no servidor: ela expira após cinco minutos.
+GET /simulation/orders/{id} lê o estado mutável da simulação, com versão. GET /orders/{id} continua no snapshot estático. POST /tickets aceita order_source=simulation para o estado atualizado; o padrão legado é snapshot. Esses universos são deliberadamente separados: uma simulação cancelada não altera o snapshot. O fluxo de tickets pode consultar a simulação explicitamente, mas não executa alterações. A interface consulta o estado da simulação, prepara atendimentos em /tickets e registra revisões em /handoffs. Em falhas de rede, uma nova tentativa na mesma tela preserva proposta e chave. Recarregar a página perde esse contexto; consulte o estado antes de iniciar outra operação. Descartar na tela não revoga a proposta no servidor: ela expira após cinco minutos.
 
-SQLite serializa escritores; este contrato não promete coordenação entre bancos distintos nem execução exatamente uma vez em serviços externos. Não há autenticação, autorização, retenção/limpeza de propostas, migrações, auditoria de identidade ou backup gerenciado. Propostas expiradas permanecem armazenadas. A regra é fixa no código, não inferida da política pelo LLM.
+SQLite serializa escritores; este contrato não promete coordenação entre bancos distintos nem execução exatamente uma vez em serviços externos. Há token compartilhado configurável e esquema v1; não há contas individuais, autorização por pedido, retenção/limpeza de propostas, auditoria de identidade ou backup gerenciado. Propostas expiradas permanecem armazenadas. A regra é fixa no código, não inferida da política pelo LLM.
 
 ## Validação
 
 91 testes passaram em 17/11/2026 (10 novos). Incluem oito confirmações concorrentes com uma só execução, persistência ao reabrir o banco, isolamento da fixture, expiração, proposta desatualizada, conflito de chave, rollback após falha forçada e contratos ASGI. Testes usam bancos temporários. Não houve nova avaliação de modelos; as limitações de relevância anteriores permanecem.
 
 Interface v0.7: um teste JavaScript do fluxo com DOM/fetch simulados passou, além dos 91 testes Python e checks HTTP reais da página e script. A renderização visual em navegador ainda não foi validada.
+
+A versão 1.0 foi validada em Chromium desktop/mobile e com inferência local real. Veja o [fechamento técnico](RELEASE.md) para resultados atuais; os números acima registram entregas anteriores.

@@ -9,7 +9,15 @@ import time
 from uuid import uuid4
 
 from pydantic import Field
-from .orders import OrderDataset, OrderId, ORDERS_PATH, StrictModel
+from .orders import OrderDataset, OrderId, OrderStatus, ORDERS_PATH, StrictModel
+
+
+class SimulationOrder(StrictModel):
+    order_id: OrderId
+    status: OrderStatus
+    version: int = Field(ge=1)
+    synthetic: bool = True
+    scope: str = "simulation"
 
 
 class ProposalInput(StrictModel):
@@ -41,6 +49,10 @@ class ActionStore:
         db.row_factory = sqlite3.Row
         try:
             db.execute('BEGIN IMMEDIATE')
+            schema_version = db.execute('PRAGMA user_version').fetchone()[0]
+            if schema_version not in (0, 1):
+                raise ActionError(503, 'unsupported_store_version')
+            db.execute('PRAGMA user_version = 1')
             db.execute('CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, status TEXT NOT NULL, version INTEGER NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS proposals (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, version INTEGER NOT NULL, expires REAL NOT NULL, consumed INTEGER NOT NULL DEFAULT 0)')
@@ -63,7 +75,7 @@ class ActionStore:
             row = db.execute('SELECT * FROM orders WHERE id=?', (request.order_id,)).fetchone()
             if row is None:
                 raise ActionError(404, 'order_not_found')
-            return dict(synthetic=True, scope='simulation', order_id=row['id'], status=row['status'], version=row['version'])
+            return SimulationOrder(order_id=row['id'], status=row['status'], version=row['version']).model_dump()
 
     def propose(self, request: ProposalInput):
         with self.transaction() as db:

@@ -62,3 +62,7 @@ A ficha traz todos os casos da primeira repetição, resposta, fontes recuperada
 ## Relatórios consolidados
 
 [Baseline v1](RESULTS.md) · [Busca e fidelidade v2](RESULTS_V2.md) · [Seleção restrita v3.2 e tentativas anteriores](RESULTS_V3.md)
+
+## Verificação da aplicação 1.0
+
+`python -m evaluation.verify_release --output CAMINHO_NOVO` executa checks HTTP em banco temporário; acrescente `--grounded` para inferência real. `python -m evaluation.verify_workflow --output CAMINHO_NOVO` importa e executa n8n contra dois serviços locais, incluindo falha/recuperação/replay. Essas verificações medem integração, não qualidade geral do LLM. Veja [integração](../integrations/README.md) e [fechamento](../docs/RELEASE.md).

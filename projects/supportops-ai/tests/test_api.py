@@ -1,20 +1,28 @@
 import json
+import atexit
+import os
+import tempfile
+from unittest.mock import patch
+
+_TEST_STORE = tempfile.TemporaryDirectory()
+atexit.register(_TEST_STORE.cleanup)
 import unittest
 from supportops.api import app
 
 
-async def request(method, path, payload=None):
+async def request(method, path, payload=None, headers=None):
     messages = []
     body = json.dumps(payload).encode() if payload is not None else b""
     scope = {"type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1",
              "method": method, "scheme": "http", "path": path, "raw_path": path.encode(),
-             "query_string": b"", "headers": [(b"content-type", b"application/json")],
+             "query_string": b"", "headers": [(b"content-type", b"application/json")] + [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()],
              "client": ("127.0.0.1", 1), "server": ("testserver", 80), "root_path": ""}
     async def receive():
         return {"type": "http.request", "body": body, "more_body": False}
     async def send(message):
         messages.append(message)
-    await app(scope, receive, send)
+    with patch.dict(os.environ, {"SUPPORTOPS_ACTION_DB": os.environ.get("SUPPORTOPS_ACTION_DB", _TEST_STORE.name + "/actions.sqlite3")}):
+        await app(scope, receive, send)
     status = next(m["status"] for m in messages if m["type"] == "http.response.start")
     content = b"".join(m.get("body", b"") for m in messages if m["type"] == "http.response.body")
     return status, json.loads(content)

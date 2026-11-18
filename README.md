@@ -1,18 +1,22 @@
 # AI Engineering Studies
 
-Estudos pessoais de engenharia de IA com código, testes, documentação e resultados reproduzíveis.
+Estudos pessoais de engenharia de IA com implementação, testes, documentação e evidências reproduzíveis.
 
-## SupportOps AI
+## SupportOps AI — versão 1.0
 
-Assistente experimental para uma operação fictícia de delivery. Implementa API FastAPI, políticas versionadas, busca lexical/semântica/híbrida, inferência local e rastreamento. O modo grounded seleciona políticas aprovadas e devolve citações literais; o modo demonstrativo padrão funciona sem modelos.
+Aplicação de suporte para delivery fictício: busca lexical/semântica/híbrida, inferência local, respostas com fontes, estado simulado, rastros persistidos, revisão e cancelamento confirmados, autenticação configurável e integração n8n com sistema HTTP externo de teste.
 
-**Estado verificado em 17/11/2026:** 91 testes Python e um teste JavaScript passaram. Interface local de revisão disponível na raiz da API. Cancelamento em simulação separada disponível com confirmação explícita, idempotência e SQLite. Consulta de pedidos sintéticos somente leitura disponível, com contratos e rastros. A validação anterior de políticas incluiu nove solicitações HTTP, quatro checks de saúde e dois probes de corpus adulterado. A configuração final citou o documento esperado em 10/12 perguntas respondíveis de desenvolvimento e 12/12 da última bateria sintética. Persistem erros de relevância e ambiguidade; respostas exigem revisão.
+- [Executar e demonstrar](projects/supportops-ai/README.md)
+- [Vídeo](projects/supportops-ai/docs/demo/supportops-demo.webm)
+- [Fechamento técnico e evidências](projects/supportops-ai/docs/RELEASE.md)
+- [Resultados do modelo e limitações](projects/supportops-ai/evaluation/RESULTS_V3.md)
+- [Artigo: recuperação, fidelidade e execução](projects/supportops-ai/docs/technical-note.md)
+- [Continuidade](CONTINUITY.md)
 
-- [Executar o projeto](projects/supportops-ai/README.md)
-- [Resultados v3 e limites](projects/supportops-ai/evaluation/RESULTS_V3.md)
-- [Simulação de cancelamento](projects/supportops-ai/docs/simulation.md)
-- [Consulta de pedidos sintéticos](projects/supportops-ai/docs/order-tool.md)
-- [Arquitetura](projects/supportops-ai/docs/architecture.md)
-- [Ponto de retomada entre sessões](CONTINUITY.md)
+103 testes Python, 1 teste JavaScript e 2 testes de navegador passaram. Fluxos HTTP e n8n foram executados com inferência local real. Os dados são sintéticos, sem validação humana independente ou impacto de negócio comprovado. A aplicação não está hospedada como serviço público; execução e empacotamento estão documentados.
 
-Os resultados incluem tentativas malsucedidas. Não há validação humana independente, uso em produção ou impacto de negócio comprovado. DemandLab continua planejado, sem implementação.
+## DemandLab
+
+Planejado, ainda não iniciado. Será desenvolvido separadamente após o fechamento do SupportOps.
+
+Código sob [MIT](LICENSE); dados próprios têm a licença indicada em cada projeto.

@@ -1,0 +1,60 @@
+{
+  "created_at": "2026-11-18T18:34:38.743138+00:00",
+  "kind": "actual_n8n_local_test_system",
+  "n8n_version": "2.48.4",
+  "workflow_sha256": "905bfba7f450b153aa3802d538b27aec638935cbb82f9bc1377ae43b02ddc5d5",
+  "checks": [
+    {
+      "check": "webhook_authentication",
+      "http_status": 403
+    },
+    {
+      "check": "destination_down_is_failure",
+      "http_status": 500,
+      "response": {
+        "message": "Error in workflow"
+      }
+    },
+    {
+      "check": "retry_after_recovery",
+      "http_status": 200,
+      "response": {
+        "event_id": "workflow-demo-event-1",
+        "receipt_id": "7d4066a1d1c54e5fb8b9f6d74fed9f61",
+        "status": "recorded",
+        "synthetic": true,
+        "trace_id": "0eafc006-90ee-47de-ab35-ff9f14d7c405"
+      }
+    },
+    {
+      "check": "duplicate_delivery_same_receipt",
+      "http_status": 200,
+      "response": {
+        "event_id": "workflow-demo-event-1",
+        "receipt_id": "7d4066a1d1c54e5fb8b9f6d74fed9f61",
+        "status": "recorded",
+        "synthetic": true,
+        "trace_id": "0eafc006-90ee-47de-ab35-ff9f14d7c405"
+      }
+    },
+    {
+      "check": "changed_payload_rejected",
+      "http_status": 500,
+      "response": {
+        "message": "Error in workflow"
+      }
+    }
+  ],
+  "api_events": 1,
+  "sink_events": 1,
+  "n8n_executions": [
+    {
+      "status": "error",
+      "count": 2
+    },
+    {
+      "status": "success",
+      "count": 2
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "n8n": "2.48.4"
+  },
+  "allowScripts": {
+    "sqlite3": true,
+    "isolated-vm": true
+  }
+}

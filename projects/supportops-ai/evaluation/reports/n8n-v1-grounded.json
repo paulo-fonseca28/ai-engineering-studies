@@ -1,0 +1,172 @@
+{
+  "created_at": "2026-11-18T18:44:45.786538+00:00",
+  "kind": "actual_n8n_local_test_system",
+  "grounded": true,
+  "n8n_version": "2.48.4",
+  "workflow_sha256": "905bfba7f450b153aa3802d538b27aec638935cbb82f9bc1377ae43b02ddc5d5",
+  "checks": [
+    {
+      "check": "webhook_authentication",
+      "http_status": 403
+    },
+    {
+      "check": "destination_down_is_failure",
+      "http_status": 500,
+      "response": {
+        "message": "Error in workflow"
+      }
+    },
+    {
+      "check": "retry_after_recovery",
+      "http_status": 200,
+      "response": {
+        "event_id": "workflow-demo-event-1",
+        "receipt_id": "a71172f7fc7d478185180a64c148d68e",
+        "status": "recorded",
+        "synthetic": true,
+        "trace_id": "9b80091c-b281-4ff0-a5fc-6b2c581d7e2d"
+      }
+    },
+    {
+      "check": "duplicate_delivery_same_receipt",
+      "http_status": 200,
+      "response": {
+        "event_id": "workflow-demo-event-1",
+        "receipt_id": "a71172f7fc7d478185180a64c148d68e",
+        "status": "recorded",
+        "synthetic": true,
+        "trace_id": "9b80091c-b281-4ff0-a5fc-6b2c581d7e2d"
+      }
+    },
+    {
+      "check": "changed_payload_rejected",
+      "http_status": 500,
+      "response": {
+        "message": "Error in workflow"
+      }
+    }
+  ],
+  "api_events": 1,
+  "sink_events": 1,
+  "n8n_executions": [
+    {
+      "status": "error",
+      "count": 2
+    },
+    {
+      "status": "success",
+      "count": 2
+    }
+  ],
+  "ticket": {
+    "answer": "Pedido fictício DEMO-1001: recebido. Estado da simulação, versão 1.\n\nOrientação geral da política (não é decisão sobre o pedido):\nPolítica de demonstração — trecho literal:\nO cancelamento pode ser solicitado enquanto o pedido estiver recebido. Se estiver em preparo ou em entrega, encaminhe para revisão. Não confirme cancelamento automaticamente.",
+    "citations": [
+      "cancellation:9a72f150c547:1:0"
+    ],
+    "needs_review": true,
+    "answer_kind": "order_and_policy",
+    "inference_status": "completed",
+    "sources": [
+      {
+        "id": "cancellation:9a72f150c547:1:0",
+        "document": "cancellation.md",
+        "version": "9a72f150c547bba191527e8cec9482a9f66fc0bbfd12c6bc86aa4be6d53398a5",
+        "title": "Cancelamento",
+        "text": "O cancelamento pode ser solicitado enquanto o pedido estiver recebido. Se estiver em preparo ou em entrega, encaminhe para revisão. Não confirme cancelamento automaticamente.",
+        "score": 0.558113926007079
+      }
+    ],
+    "mode": "grounded",
+    "simulated": false,
+    "usage": {
+      "model": "qwen3:1.7b",
+      "input_tokens": 240,
+      "output_tokens": 9,
+      "provider_duration_ns": 58215831,
+      "load_duration_ns": 582288
+    },
+    "trace_id": "9b80091c-b281-4ff0-a5fc-6b2c581d7e2d",
+    "trace": [
+      {
+        "step": "route",
+        "request_type": "order_policy"
+      },
+      {
+        "step": "tool",
+        "name": "lookup_simulation_order",
+        "version": "1",
+        "arguments": {
+          "order_id": "DEMO-1001"
+        },
+        "read_only": true,
+        "outcome": "found",
+        "order_version": 1,
+        "duration_ms": 2.447
+      },
+      {
+        "step": "source_integrity",
+        "approved_chunks": 6,
+        "rejected_chunks": 0
+      },
+      {
+        "step": "retrieval",
+        "strategy": "semantic",
+        "embedding": {
+          "model": "qwen3-embedding:0.6b",
+          "digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+          "details": {
+            "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "595.78M",
+            "quantization_level": "Q8_0",
+            "context_length": 32768,
+            "embedding_length": 1024,
+            "runner": "ggml"
+          }
+        },
+        "rrf_k": null,
+        "chunks_indexed": 6,
+        "sources_found": 3
+      },
+      {
+        "step": "evidence_gate",
+        "threshold": 0.47,
+        "accepted_sources": 1,
+        "rejected_sources": 2
+      },
+      {
+        "step": "inference",
+        "status": "completed",
+        "response_policy": "approved_quote"
+      },
+      {
+        "step": "render",
+        "order_fields_from_tool": true,
+        "mutations_executed": 0
+      }
+    ],
+    "duration_ms": 433.046,
+    "policy_section": {
+      "answer": "Política de demonstração — trecho literal:\nO cancelamento pode ser solicitado enquanto o pedido estiver recebido. Se estiver em preparo ou em entrega, encaminhe para revisão. Não confirme cancelamento automaticamente.",
+      "answer_kind": "policy_quote",
+      "inference_status": "completed",
+      "citations": [
+        "cancellation:9a72f150c547:1:0"
+      ]
+    },
+    "request_type": "order_policy",
+    "order_lookup": null,
+    "order_source": "simulation",
+    "simulation_order": {
+      "order_id": "DEMO-1001",
+      "status": "received",
+      "version": 1,
+      "synthetic": true,
+      "scope": "simulation"
+    }
+  }
+}

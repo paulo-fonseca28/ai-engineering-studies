@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!requirements.txt
+!supportops/**
+!data/**
+!integrations/**
+**/__pycache__/**
+**/node_modules/**
