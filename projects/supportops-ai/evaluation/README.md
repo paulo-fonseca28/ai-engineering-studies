@@ -1,6 +1,6 @@
 # Avaliação reproduzível
 
-Políticas e perguntas são sintéticas, elaboradas pelo agente de desenvolvimento sem anotação humana independente. Dados de exemplo sob CC0-1.0. Cada pergunta tem ID, categoria e documentos de referência. A API e os experimentos usam o mesmo núcleo.
+Organizei esta avaliação para comparar recuperação, seleção de políticas e comportamento nos casos sem evidência. Usei políticas e perguntas sintéticas geradas com apoio de IA, sem anotação humana independente. Disponibilizo os dados de exemplo sob CC0-1.0. Cada pergunta tem ID, categoria e documentos de referência; mantive o mesmo núcleo na API e nos experimentos.
 
 ## Conjuntos e exposição
 
@@ -12,7 +12,7 @@ Políticas e perguntas são sintéticas, elaboradas pelo agente de desenvolvimen
 | heldout-v4.jsonl | 24, mesma composição | Contrato v3.1; exposto. |
 | heldout-v5.jsonl | 24, mesma composição | Configuração final v3.2, congelado antes da execução; agora exposto. |
 
-Não há perguntas exatamente iguais entre partições, mas existem paráfrases das mesmas seis políticas. Nenhum conjunto publicado deve ser tratado como teste cego para novos ajustes. As três repetições de cada pergunta medem variação de execução; não são três exemplos independentes.
+Não há perguntas exatamente iguais entre partições, mas existem paráfrases das mesmas seis políticas. Não trato nenhum conjunto já publicado como teste cego para novos ajustes. As três repetições de cada pergunta medem variação de execução; não são três exemplos independentes.
 
 ## Comandos
 
@@ -25,13 +25,13 @@ OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.run --split dev --strateg
 OLLAMA_MODEL=qwen3:1.7b .venv/bin/python -m evaluation.verify_runtime --output evaluation/reports/local-runtime.json
 ```
 
-Saídas existentes não são sobrescritas. Falha de recuperação/configuração invalida o experimento com saída não zero, preservando o relatório quando possível. Ausência total de inferência bem-sucedida também falha. Falhas parciais permanecem nas métricas. Não há fallback silencioso para demonstração.
+Configurei os scripts para não sobrescrever saídas existentes. Falha de recuperação/configuração invalida o experimento com saída não zero, preservando o relatório quando possível. Ausência total de inferência bem-sucedida também falha. Falhas parciais permanecem nas métricas. Não há fallback silencioso para demonstração.
 
-O JSON registra respostas individuais, hashes do código/dados/prompts/manifesto, commit, ambiente, modelo, digest, opções e tokens retornados. O Markdown resume. Para reproduzir um relatório histórico, use seu commit e hashes, não presuma que o código atual corresponde a ele. Os tokens registrados são do chat/seletor, não dos embeddings; custo financeiro e validação semântica permanecem não medidos.
+Registro no JSON as respostas individuais, hashes do código/dados/prompts/manifesto, commit, ambiente, modelo, digest, opções e tokens retornados. Uso o Markdown para resumir os resultados. Para reproduzir um relatório histórico, use seu commit e hashes, não presuma que o código atual corresponde a ele. Os tokens registrados são do chat/seletor, não dos embeddings; custo financeiro e validação semântica permanecem não medidos.
 
 ## Calibração e protocolo grounded
 
-`python -m evaluation.calibrate --report evaluation/reports/dev-retrieval-v2.json --output evaluation/reports/local-threshold.json` aceita apenas resultados de desenvolvimento. Usa a primeira repetição semântica, uma grade declarada e a regra: rejeitar todos os casos sem resposta no desenvolvimento, maximizar retenção dos respondíveis e escolher o menor limiar em caso de empate. O limiar 0,47 preservou 10/12 respondíveis e rejeitou 3/3 sem resposta. Essa separação não foi garantida em novas perguntas.
+`python -m evaluation.calibrate --report evaluation/reports/dev-retrieval-v2.json --output evaluation/reports/local-threshold.json` aceita apenas resultados de desenvolvimento. Usa a primeira repetição semântica, uma grade declarada e a regra: rejeitar todos os casos sem resposta no desenvolvimento, maximizar retenção dos respondíveis e escolher o menor limiar em caso de empate. Com esse procedimento, o limiar 0,47 preservou 10/12 respondíveis e rejeitou 3/3 sem resposta. Essa separação não foi garantida em novas perguntas.
 
 O modo grounded verifica o manifesto antes de recuperar fontes, aplica o limiar ao cosseno e usa um seletor com referências curtas. Não aplica 0,47 a scores lexicais ou RRF. O renderizador devolve citação integral ou mensagem fixa; revisão é obrigatória por código. As fontes medidas pelo runner são as admitidas após o limiar.
 
@@ -57,7 +57,7 @@ O modo grounded verifica o manifesto antes de recuperar fontes, aplica o limiar 
 .venv/bin/python -m evaluation.review --summarize evaluation/reports/local-review.json
 ```
 
-A ficha traz todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Começa como `pending`; não há aprovação automática. Cada anotação precisa de justificativa e tipo de revisor. `supported`, `unsupported`, `incomplete` e `abstained` separam sustentação, contradição, incompletude e ausência de resposta. Anotações `ai_assisted` não equivalem a validação humana independente.
+A ficha traz todos os casos da primeira repetição, resposta, fontes recuperadas, políticas de referência e hash do relatório original. Começa como `pending`; não há aprovação automática. Cada anotação precisa de justificativa e tipo de revisor. `supported`, `unsupported`, `incomplete` e `abstained` separam sustentação, contradição, incompletude e ausência de resposta. Mantenho as anotações `ai_assisted` identificadas como revisão com assistência de IA, sem apresentá-las como validação humana independente.
 
 ## Relatórios consolidados
 
@@ -65,4 +65,4 @@ A ficha traz todos os casos da primeira repetição, resposta, fontes recuperada
 
 ## Verificação da aplicação 1.0
 
-`python -m evaluation.verify_release --output CAMINHO_NOVO` executa checks HTTP em banco temporário; acrescente `--grounded` para inferência real. `python -m evaluation.verify_workflow --output CAMINHO_NOVO` importa e executa n8n contra dois serviços locais, incluindo falha/recuperação/replay. Essas verificações medem integração, não qualidade geral do LLM. Veja [integração](../integrations/README.md) e [fechamento](../docs/RELEASE.md).
+`python -m evaluation.verify_release --output CAMINHO_NOVO` executa checks HTTP em banco temporário; acrescente `--grounded` para inferência real. `python -m evaluation.verify_workflow --output CAMINHO_NOVO` importa e executa n8n contra dois serviços locais, incluindo falha/recuperação/replay. Uso essas verificações para medir integração, sem tratá-las como evidência de qualidade geral do LLM. Veja [integração](../integrations/README.md) e [fechamento](../docs/RELEASE.md).

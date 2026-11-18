@@ -1,6 +1,6 @@
 # Workflow n8n e sistema externo de teste
 
-[Importar workflow](n8n-workflow.json). Fluxo: webhook autenticado → `POST /integrations/tickets` → `POST /events` em um processo HTTP separado com banco próprio.
+Criei este [workflow importável](n8n-workflow.json) para testar a automação entre a aplicação e um sistema HTTP separado. Organizei o fluxo assim: webhook autenticado → `POST /integrations/tickets` → `POST /events` em um processo HTTP separado com banco próprio.
 
 O webhook recebe:
 
@@ -29,7 +29,7 @@ npm ci --prefix integrations/runtime
 
 O verificador cria uma instalação n8n temporária, importa o workflow e uma credencial efêmera, publica o webhook, inicia a API, força falha com destino desligado, inicia o destino e repete o evento. Confere recibos e contagens diretamente nos bancos. Todos os processos temporários são encerrados. Não requer conta n8n Cloud ou sistema real.
 
-Dependências do runtime estão fixadas em `runtime/package-lock.json`. Os scripts nativos de sqlite3 e isolated-vm são autorizados explicitamente em `runtime/package.json` para npm com política de scripts. Outros conectores opcionais não são usados.
+Fixei as dependências do runtime em `runtime/package-lock.json`. Os scripts nativos de sqlite3 e isolated-vm são autorizados explicitamente em `runtime/package.json` para npm com política de scripts. Outros conectores opcionais não são usados.
 
 ## Importação manual / Docker
 
@@ -48,8 +48,8 @@ Compose já define os endereços internos. No uso sem Docker, inicie o receptor 
 
 Os nós HTTP tentam novamente até três vezes. Erros do destino/API fazem a execução falhar; o webhook não confirma registro bem-sucedido quando o destino está fora. As execuções do n8n preservam erros e saídas. Um evento idêntico recupera o mesmo atendimento e o mesmo recibo externo. Reutilizar seu ID com conteúdo diferente é conflito.
 
-A API e o receptor deduplicam em bancos separados; não há transação distribuída. A API pode ter concluído o atendimento antes de falhar a entrega. Reenvie o mesmo evento para recuperar. Repetições simultâneas podem repetir inferência somente leitura, mas só um recibo é persistido. O verificador demonstra falha, recuperação, replay, conflito e apenas uma linha em cada banco.
+Implementei a deduplicação na API e no receptor, cada um com seu banco; não há transação distribuída. A API pode ter concluído o atendimento antes de falhar a entrega. Reenvie o mesmo evento para recuperar. Repetições simultâneas podem repetir inferência somente leitura, mas só um recibo é persistido. O verificador demonstra falha, recuperação, replay, conflito e apenas uma linha em cada banco.
 
-O workflow não chama `/handoffs` nem confirma cancelamentos: essas ações continuam exigindo revisão explícita na interface. O receptor é um sistema de teste separado, não um SaaS de produção. Nenhum segredo é exportado no JSON.
+Mantive o workflow sem chamadas a `/handoffs` ou confirmações de cancelamento: essas ações continuam exigindo revisão explícita na interface. O receptor é um sistema de teste separado, não um SaaS de produção. Nenhum segredo é exportado no JSON.
 
 Referências de implementação: [CLI do n8n](https://docs.n8n.io/hosting/cli-commands/), [Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/), [HTTP Request e repetição](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/common-issues/).

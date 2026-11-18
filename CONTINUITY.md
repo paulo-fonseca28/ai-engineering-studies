@@ -48,3 +48,7 @@ Código, relatórios, vídeo, capturas e workflow publicados no GitHub. GitHub A
 Conferir git status/log antes de agir. Sandbox somente leitura exige escalonamento para escrita, testes e rede. Push HTTPS: git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin main. Nunca presumir término de push/CI; verificar resposta.
 
 Hospedagem pública não contratada/configurada; nenhum host ou orçamento foi definido. Não alegar deploy público. SQLite e busca em memória foram decisões explícitas; PostgreSQL/pgvector e múltiplos agentes não são usados. O projeto é demonstração funcional, não operação de clientes reais. Não incluir informações pessoais de candidatura na documentação pública.
+
+## Preferência editorial
+
+READMEs públicos revisados em primeira pessoa, na voz do autor, mantendo explícito o apoio de IA, os dados sintéticos e as limitações verificadas. Preservar esse tom nas próximas atualizações.
